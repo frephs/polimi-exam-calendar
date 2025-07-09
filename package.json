@@ -1,0 +1,31 @@
+{
+  "name": "polimi-exam-calendar",
+  "version": "1.0.0",
+  "description": "Adds a calendar view for exams to the Polimi exam page.",
+  "main": "dist/contentScript.js",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "build:dev": "webpack --mode=development",
+    "watch": "webpack --mode=development --watch",
+    "clean": "rm -rf dist",
+    "lint": "web-ext lint --source-dir=dist",
+    "package": "npm run build && web-ext build --source-dir=dist --artifacts-dir=web-ext-artifacts",
+    "start": "npm run build:dev && web-ext run --source-dir=dist"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.17",
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@types/fullcalendar": "^3.8.0",
+    "fullcalendar": "^6.0.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.0.0",
+    "web-ext": "^8.8.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
+}
