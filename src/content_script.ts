@@ -62,7 +62,9 @@ function parseDate(dateText: string | undefined): Date | null {
   const year = Number(yearStr);
 
   const months = Array.from({ length: 12 }, (_, i) =>
-    new Date(2000, i, 1).toLocaleString("it-IT", { month: "short" }).toUpperCase()
+    new Date(2000, i, 1)
+      .toLocaleString("it-IT", { month: "short" })
+      .toUpperCase()
   );
 
   const month = months.indexOf(monthStr.toUpperCase());
@@ -122,7 +124,7 @@ function addExportButton() {
       exportButton = document.createElement("button");
       exportButton.id = "export-ics-button";
       exportButton.textContent = "Export exams you registered for as ICS";
-      
+
       const buttonElement = exportButton as HTMLElement;
       buttonElement.classList.add("p-button", "p-component");
       buttonElement.style.margin = "10px";
@@ -135,18 +137,19 @@ function addExportButton() {
 
 // Modify the script to continuously attempt rendering until the active tab is found
 function attemptRenderCalendar() {
+  exams.length = 0;
+  extractExamData();
+  const activeSection = document.querySelector(
+    '.p-tabview-panel:not([aria-hidden="true"])'
+  );
 
-    exams.length = 0;
-    extractExamData();
-    const activeSection = document.querySelector(
-      '.p-tabview-panel:not([aria-hidden="true"])'
-    );
-
-    exams.some((exam) => exam.shots.some((shot) => shot.enrolled)) ? addExportButton() : activeSection?.appendChild(
-      Object.assign(document.createElement("p"), {
-        textContent: "No exam enrollments found."
-      })
-    );
+  exams.some((exam) => exam.shots.some((shot) => shot.enrolled))
+    ? addExportButton()
+    : activeSection?.appendChild(
+        Object.assign(document.createElement("p"), {
+          textContent: "No exam enrollments found.",
+        })
+      );
 
   if (activeSection) {
     let calendarElement = activeSection.querySelector("#calendar");
@@ -174,13 +177,10 @@ function attemptRenderCalendar() {
           start: shot.date.toISOString(),
           color: shot.enrolled ? "#4CAF50" : "#2196F3",
           allDay: true,
-          url:
-            "https://the-anxious-display.vercel.app/?countdowns=" +
-            urlParam,
+          url: "https://the-anxious-display.vercel.app/?countdowns=" + urlParam,
         };
       })
     );
-
 
     if (calendar) {
       calendar.destroy(); // Destroy the previous calendar instance
@@ -212,7 +212,6 @@ function attemptRenderCalendar() {
     calendar.render();
 
     setupClickListener();
-
   } else {
     console.log("Active section not found. Retrying in 1 second...");
     setTimeout(attemptRenderCalendar, 1000);
@@ -230,4 +229,3 @@ function setupClickListener() {
 }
 
 attemptRenderCalendar();
-
