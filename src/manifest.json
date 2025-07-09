@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "polimi-exam-calendar",
+  "description": "Display a calendar in the exam registration section of the online services to best plan your exam session.",
+  "version": "1.0.0",
+  "icons": {
+    "64": "icons/icon.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*.polimi.it/iae/app/*"],
+      "js": ["content_script.js"]
+    }
+  ]
+}
