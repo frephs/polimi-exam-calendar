@@ -21,6 +21,9 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,20 +56,57 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            const manifest = JSON.parse(fs.readFileSync('src/manifest.json', 'utf8'));
             manifest.version = '${{ steps.version.outputs.new_version }}';
-            fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+            fs.writeFileSync('src/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
           "
           
       - name: Build and package extension
         run: |
+          echo "Building extension..."
           npm run build
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory not created"
+            exit 1
+          fi
+          echo "Packaging extension..."
           npm run package
+          if [ ! -d "web-ext-artifacts" ]; then
+            echo "Error: web-ext-artifacts directory not created"
+            exit 1
+          fi
+          
+      - name: Create dist zip
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist directory does not exist"
+            exit 1
+          fi
+          cd dist
+          zip -r "../polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip" .
+          cd ..
+          if [ ! -f "polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip" ]; then
+            echo "Error: dist zip file was not created"
+            exit 1
+          fi
+          
+      - name: Debug file listing
+        run: |
+          echo "=== Dist directory contents ==="
+          ls -la dist/
+          echo "=== Web-ext artifacts ==="
+          ls -la web-ext-artifacts/
+          echo "=== Root directory ZIP files ==="
+          ls -la *.zip || echo "No ZIP files in root"
           
       - name: Commit version bump
         run: |
-          git add package.json package-lock.json manifest.json
-          git commit -m "chore: bump version to v${{ steps.version.outputs.new_version }}"
+          git add package.json package-lock.json src/manifest.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: bump version to v${{ steps.version.outputs.new_version }}"
+          fi
           
       - name: Create and push tag
         run: |
@@ -76,15 +116,40 @@ jobs:
       - name: Find extension file
         id: extension_file
         run: |
+          if [ ! -d "web-ext-artifacts" ]; then
+            echo "Error: web-ext-artifacts directory does not exist"
+            exit 1
+          fi
           EXTENSION_FILE=$(find web-ext-artifacts -name "*.zip" | head -1)
+          if [ -z "$EXTENSION_FILE" ]; then
+            echo "Error: No extension file found in web-ext-artifacts"
+            exit 1
+          fi
+          echo "Found extension file: $EXTENSION_FILE"
           echo "path=$EXTENSION_FILE" >> $GITHUB_OUTPUT
           echo "filename=$(basename $EXTENSION_FILE)" >> $GITHUB_OUTPUT
+          echo "dist_zip=polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip" >> $GITHUB_OUTPUT
+          
+      - name: Verify release files
+        run: |
+          echo "Verifying release files exist..."
+          if [ ! -f "${{ steps.extension_file.outputs.path }}" ]; then
+            echo "Error: Extension file does not exist: ${{ steps.extension_file.outputs.path }}"
+            exit 1
+          fi
+          if [ ! -f "${{ steps.extension_file.outputs.dist_zip }}" ]; then
+            echo "Error: Dist zip file does not exist: ${{ steps.extension_file.outputs.dist_zip }}"
+            exit 1
+          fi
+          echo "All release files verified successfully"
           
       - name: Generate changelog
         id: changelog
         run: |
           if [ -n "${{ github.event.inputs.release_notes }}" ]; then
             echo "custom_notes=${{ github.event.inputs.release_notes }}" >> $GITHUB_OUTPUT
+          else
+            echo "custom_notes=" >> $GITHUB_OUTPUT
           fi
           
           # Get commits since last tag
@@ -99,31 +164,34 @@ jobs:
           fi
           
       - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.new_version }}
-          release_name: Release v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
           body: |
             ## Polimi Exam Calendar Extension v${{ steps.version.outputs.new_version }}
             
-            ${{ steps.changelog.outputs.custom_notes }}
+            ${{ steps.changelog.outputs.custom_notes && steps.changelog.outputs.custom_notes || '' }}
             
             ### Changes
             ${{ steps.changelog.outputs.commits }}
             
             ### Installation Instructions
             
+            **Download Options:**
+            - `polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip` - Ready-to-use extension package (recommended)
+            - `polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip` - Just the built files (for advanced users)
+            
             **For Chrome/Edge:**
-            1. Download the extension ZIP file below
+            1. Download the extension ZIP file (`polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip`)
             2. Extract the ZIP file to a folder
             3. Open Chrome/Edge and go to `chrome://extensions/` or `edge://extensions/`
             4. Enable "Developer mode" (toggle in top right)
             5. Click "Load unpacked" and select the extracted folder
             
             **For Firefox:**
-            1. Download the extension ZIP file below
+            1. Download the extension ZIP file (`polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip`)
             2. Open Firefox and go to `about:debugging`
             3. Click "This Firefox"
             4. Click "Load Temporary Add-on"
@@ -137,15 +205,10 @@ jobs:
             ---
             
             **Download the extension below ⬇️**
+          files: |
+            ${{ steps.extension_file.outputs.path }}
+            ${{ steps.extension_file.outputs.dist_zip }}
           draft: false
           prerelease: false
-          
-      - name: Upload Extension to Release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.extension_file.outputs.path }}
-          asset_name: polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip
-          asset_content_type: application/zip
