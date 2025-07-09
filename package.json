@@ -10,7 +10,13 @@
     "clean": "rm -rf dist",
     "lint": "web-ext lint --source-dir=dist",
     "package": "npm run build && web-ext build --source-dir=dist --artifacts-dir=web-ext-artifacts",
-    "start": "npm run build:dev && web-ext run --source-dir=dist"
+    "start": "npm run build:dev && web-ext run --source-dir=dist",
+    "release:patch": "npm version patch && git push origin HEAD --tags",
+    "release:minor": "npm version minor && git push origin HEAD --tags",
+    "release:major": "npm version major && git push origin HEAD --tags",
+    "preversion": "npm run lint",
+    "version": "npm run build && npm run package && git add -A",
+    "postversion": "echo 'Version updated! Push the tag to trigger release: git push origin HEAD --tags'"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",

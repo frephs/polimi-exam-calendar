@@ -1,0 +1,99 @@
+name: Build and Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build extension
+        run: npm run build
+        
+      - name: Package extension
+        run: npm run package
+        
+      - name: Get package info
+        id: package
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          
+      - name: Find extension file
+        id: extension_file
+        run: |
+          EXTENSION_FILE=$(find web-ext-artifacts -name "*.zip" | head -1)
+          echo "path=$EXTENSION_FILE" >> $GITHUB_OUTPUT
+          echo "filename=$(basename $EXTENSION_FILE)" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes in this release
+            
+            🎉 New release of Polimi Exam Calendar Extension v${{ steps.package.outputs.version }}
+            
+            ### Installation
+            1. Download the extension file below
+            2. Extract the ZIP file
+            3. Open your browser's extension management page
+            4. Enable "Developer mode"
+            5. Click "Load unpacked" and select the extracted folder
+            
+            ### For Chrome/Edge:
+            - Go to `chrome://extensions/` or `edge://extensions/`
+            - Enable Developer mode
+            - Click "Load unpacked" and select the extracted folder
+            
+            ### For Firefox:
+            - Go to `about:debugging`
+            - Click "This Firefox"
+            - Click "Load Temporary Add-on"
+            - Select the ZIP file directly
+            
+            ---
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          
+      - name: Upload Extension Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.extension_file.outputs.path }}
+          asset_name: ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.zip
+          asset_content_type: application/zip
+          
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-build-${{ steps.package.outputs.version }}
+          path: |
+            dist/
+            web-ext-artifacts/
+          retention-days: 30

@@ -76,3 +76,32 @@ Lints the built extension using web-ext.
 
 1. Package the extension: `npm run package`
 2. Install the generated `.zip` file from `web-ext-artifacts/`
+
+## Releases
+
+### Creating a Release
+
+This project uses automated GitHub Actions for releases. You can create a release in several ways:
+
+1. **GitHub Actions (Recommended):**
+   - Go to Actions → "Create Release" → "Run workflow"
+   - Choose version type (patch/minor/major) and optional release notes
+
+2. **NPM Scripts:**
+   ```bash
+   npm run release:patch   # Bug fixes (1.0.0 → 1.0.1)
+   npm run release:minor   # New features (1.0.0 → 1.1.0)
+   npm run release:major   # Breaking changes (1.0.0 → 2.0.0)
+   ```
+
+3. **Manual Git Tags:**
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+
+See [RELEASE.md](RELEASE.md) for detailed release instructions.
+
+### Installing from Releases
+
+Download the latest release from the [Releases page](../../releases) and follow the installation instructions provided with each release.
