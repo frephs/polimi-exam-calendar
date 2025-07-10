@@ -1,4 +1,8 @@
 # Polimi Exam Calendar Browser Extension
+![Version](https://img.shields.io/github/v/release/frephs/polimi-exam-calendar?style=round)
+![License](https://img.shields.io/github/license/frephs/polimi-exam-calendar)
+![Build](https://img.shields.io/github/actions/workflow/status/frephs/polimi-exam-calendar/ci.yml?style=round?label=build)
+
 
 A browser extension that adds a calendar view for exams to the Polimi exam page.
 
