@@ -12,5 +12,10 @@
       "matches": ["*://*.polimi.it/iae/app/*"],
       "js": ["content_script.js"]
     }
-  ]
+  ], 
+  "browser_specific_settings": {
+  "gecko": {
+    "id": "polimi-exam-calendar@frephs.me"
+  }
+}
 }
