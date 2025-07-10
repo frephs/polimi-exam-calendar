@@ -6,9 +6,32 @@
 
 A browser extension that adds a calendar view for exams to the Polimi exam page.
 
-## Development Setup
+<img src="screenshot.png" style="border-radius: 8px; width: 100%;">
 
-1. Install dependencies:
+
+## Download and Installation
+Download the extension from the [Releases page](../../releases)
+
+To install the extension, follow these steps:
+
+Chrome/Edge:
+1. Download the latest release `.zip` file.
+2. Open Chrome/Edge and go to `chrome://extensions/`.
+3. Enable "Developer mode" in the top right corner.
+4. Click "Load unpacked" and select the extracted `dist/` directory.
+
+Firefox:
+1. Download the latest release `.zip` file.
+
+
+## Features
+- **Calendar View**: Displays exams in a calendar format.
+- **ICS Export**: Allows exporting the exam schedule as an ICS file for integration with other calendar applications.
+
+
+## Development Setup and Contributing
+
+Install dependencies:
    ```bash
    npm install
    ```
@@ -106,6 +129,6 @@ This project uses automated GitHub Actions for releases. You can create a releas
 
 See [RELEASE.md](RELEASE.md) for detailed release instructions.
 
-### Installing from Releases
 
-Download the latest release from the [Releases page](../../releases) and follow the installation instructions provided with each release.
+## Contributing
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute.
