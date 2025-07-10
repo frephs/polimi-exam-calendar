@@ -6,16 +6,19 @@
   "icons": {
     "64": "icons/icon.png"
   },
-
   "content_scripts": [
     {
-      "matches": ["*://*.polimi.it/iae/app/*"],
-      "js": ["content_script.js"]
+      "matches": [
+        "*://*.polimi.it/iae/app/*"
+      ],
+      "js": [
+        "content_script.js"
+      ]
     }
-  ], 
+  ],
   "browser_specific_settings": {
-  "gecko": {
-    "id": "polimi-exam-calendar@frephs.me"
+    "gecko": {
+      "id": "polimi-exam-calendar@frephs.me"
+    }
   }
-}
 }
