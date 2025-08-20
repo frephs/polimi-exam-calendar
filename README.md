@@ -4,24 +4,35 @@
 ![Build](https://img.shields.io/github/actions/workflow/status/frephs/polimi-exam-calendar/ci.yml?style=round?label=build)
 
 
+
 A browser extension that adds a calendar view for exams to the Polimi exam page.
 
 <img src="screenshot.png" style="border-radius: 8px; width: 100%;">
 
 
 ## Download and Installation
-Download the extension from the [Releases page](../../releases)
+[![Firefox Add-ons page](https://img.shields.io/badge/Firefox%20Add--ons%20page-FF7139?style=flat&logo=firefox&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/)
 
-To install the extension, follow these steps:
+Since the Chrome Web Store insertions are paid, the extension is available for one-click installation only in the Firefox Add-ons store.
 
-Chrome/Edge:
+Download the extension from the [Releases page](../../releases) or the [Firefox Add-ons page](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/).
+
+### Manual Installation
+
+To manually install the extension, follow these steps:
+
+#### Chrome/Edge:
 1. Download the latest release `.zip` file.
 2. Open Chrome/Edge and go to `chrome://extensions/`.
 3. Enable "Developer mode" in the top right corner.
 4. Click "Load unpacked" and select the extracted `dist/` directory.
 
-Firefox:
+#### Firefox:
 1. Download the latest release `.zip` file.
+2. Open Firefox and go to `about:debugging`.
+3. Click "This Firefox" in the sidebar.
+4. Click "Load Temporary Add-on" and select the extracted `dist/manifest.json` file.
+
 
 
 ## Features
