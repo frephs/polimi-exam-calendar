@@ -10,14 +10,20 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*.polimi.it/iae/app/*"
-      ],
-      "js": [
-        "content_script.js"
-      ]
+      "matches": ["*://*.polimi.it/iae/app/*"],
+      "js": ["content_script.js"]
     }
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "32": "icons/icon-32.png",
+      "64": "icons/icon-128.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "Polimi Exam Calendar Settings"
+  },
+  "permissions": ["storage"],
   "browser_specific_settings": {
     "gecko": {
       "id": "polimi-exam-calendar@frephs.me"

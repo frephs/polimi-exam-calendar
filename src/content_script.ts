@@ -7,11 +7,17 @@ import "./styles.css";
 interface Exam {
   title: string;
   shots: ExamShot[];
+  articleUrl?: string;
+  articleIndex: number;
 }
 
 interface ExamShot {
   date: Date;
   enrolled: boolean;
+}
+
+interface Settings {
+  linkType: "anxious-display" | "exam-article";
 }
 
 const exams: Exam[] = [];
@@ -28,13 +34,19 @@ function extractExamData(): Exam[] {
       .map((dateElement) => parseDate(dateElement.textContent?.trim()))
       .filter((date) => date !== null);
 
-    const icons = Array.from(
-      card.querySelectorAll("section > div:not(div:nth-child(1)) i")
-    );
+    const icons = Array.from(card.querySelectorAll(iconsSelector));
+
+    // Just grab the first link in the article
+    const mainLink = card.querySelector("a[href]");
+    const articleUrl = mainLink
+      ? (mainLink as HTMLAnchorElement).href
+      : undefined;
 
     if (title && dates.length) {
       exams.push({
         title,
+        articleUrl,
+        articleIndex: index,
         shots: dates.map((date, i) => ({
           date,
           enrolled: icons[i]
@@ -135,6 +147,14 @@ function addExportButton() {
   }
 }
 
+// Load settings from storage
+async function loadSettings(): Promise<Settings> {
+  const result = await browser.storage.sync.get({
+    linkType: "exam-article",
+  });
+  return result as Settings;
+}
+
 // Modify the script to continuously attempt rendering until the active tab is found
 function attemptRenderCalendar() {
   exams.length = 0;
@@ -161,23 +181,42 @@ function attemptRenderCalendar() {
       calendarElement.innerHTML = "";
     }
 
+    // Load settings to determine URL type
+    const settings = await loadSettings();
+    console.log("Current link type setting:", settings.linkType);
+
     const events = exams.flatMap((exam) =>
       exam.shots.map((shot, i) => {
-        let url = Array.from([
-          {
-            title: exam.title,
-            description: "imported from polimi-exam-calendar",
-            date: shot.date.toISOString(),
-          },
-        ]);
+        let eventUrl: string | undefined;
 
-        const urlParam = btoa(JSON.stringify(url));
+        if (settings.linkType === "exam-article") {
+          // Use a fake URL with article index as a marker
+          eventUrl = `#article-${exam.articleIndex}`;
+          console.log("Using article scroll to index:", exam.articleIndex);
+        } else {
+          // Default to anxious display
+          let url = Array.from([
+            {
+              title: exam.title,
+              description: "imported from polimi-exam-calendar",
+              date: shot.date.toISOString(),
+            },
+          ]);
+          const urlParam = btoa(JSON.stringify(url));
+          eventUrl =
+            "https://the-anxious-display.vercel.app/?countdowns=" + urlParam;
+          console.log("Using anxious display URL");
+        }
+
         return {
           title: exam.title,
           start: shot.date.toISOString(),
           color: shot.enrolled ? "#4CAF50" : "#2196F3",
           allDay: true,
-          url: "https://the-anxious-display.vercel.app/?countdowns=" + urlParam,
+          url: eventUrl,
+          extendedProps: {
+            articleIndex: exam.articleIndex,
+          },
         };
       })
     );
