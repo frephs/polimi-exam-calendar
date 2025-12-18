@@ -3,10 +3,11 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
-  
+
   return {
     entry: {
-      content_script: './src/content_script.ts'
+      content_script: './src/content_script.ts',
+      popup: './src/popup.ts'
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -34,7 +35,8 @@ module.exports = (env, argv) => {
         patterns: [
           { from: 'src/manifest.json', to: 'manifest.json' },
           { from: 'src/icons', to: 'icons' },
-          { from: 'src/styles.css', to: 'styles.css' }
+          { from: 'src/styles.css', to: 'styles.css' },
+          { from: 'src/popup.html', to: 'popup.html' }
         ]
       })
     ],

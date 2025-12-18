@@ -1,6 +1,7 @@
 import { Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import listPlugin from "@fullcalendar/list";
+import itLocale from "@fullcalendar/core/locales/it";
 import "./styles.css";
 
 // Interface to define the structure of Exam objects
@@ -69,11 +70,24 @@ function t(key: keyof typeof translations.en): string {
 function extractExamData(): Exam[] {
   const articles = document.querySelectorAll("article");
 
-  articles.forEach((card) => {
-    const title = card.querySelector("section div.mb-1")?.textContent?.trim();
-    const dates = Array.from(
-      card.querySelectorAll("section > div:not(div:nth-child(1))")
-    )
+  const activeTabIndex = Array.from(
+    document.querySelectorAll(".p-tabview-nav li")
+  ).findIndex((tab) => tab.classList.contains("p-highlight"));
+
+  articles.forEach((card, index) => {
+    const titleQuerySelector =
+      activeTabIndex === 0 ? "section div.pj-mb-1" : "div.mb-3";
+    const dateQuerySelector =
+      activeTabIndex === 0
+        ? "section > div:not(div:nth-child(1))"
+        : "div:not(div:nth-child(1))";
+    const iconsSelector =
+      activeTabIndex === 0
+        ? "section > div:not(div:nth-child(1)) i"
+        : "div:not(div:nth-child(1)) i";
+
+    const title = card.querySelector(titleQuerySelector)?.textContent?.trim();
+    const dates = Array.from(card.querySelectorAll(dateQuerySelector))
       .map((dateElement) => parseDate(dateElement.textContent?.trim()))
       .filter((date) => date !== null);
 
@@ -202,7 +216,7 @@ async function loadSettings(): Promise<Settings> {
 }
 
 // Modify the script to continuously attempt rendering until the active tab is found
-function attemptRenderCalendar() {
+async function attemptRenderCalendar() {
   exams.length = 0;
   extractExamData();
   const activeSection = document.querySelector(
@@ -211,20 +225,19 @@ function attemptRenderCalendar() {
 
   exams.some((exam) => exam.shots.some((shot) => shot.enrolled))
     ? addExportButton()
-    : activeSection?.appendChild(
-        Object.assign(document.createElement("p"), {
-          textContent: "No exam enrollments found.",
-        })
-      );
+    : null;
 
-  if (activeSection) {
+  if (exams.length > 0 && activeSection) {
     let calendarElement = activeSection.querySelector("#calendar");
     if (!calendarElement) {
       calendarElement = document.createElement("div");
       calendarElement.id = "calendar";
+      // Append to the end to ensure it's always at the bottom
       activeSection.appendChild(calendarElement);
     } else {
+      // Move calendar to the end if it exists
       calendarElement.innerHTML = "";
+      activeSection.appendChild(calendarElement);
     }
 
     // Load settings to determine URL type
@@ -380,10 +393,42 @@ function setupClickListener() {
   const tabs = document.querySelectorAll(".p-tabview-nav li");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      attemptRenderCalendar();
+      // Delay to allow tab content to load
+      setTimeout(() => {
+        attemptRenderCalendar();
+        console.log("Tab clicked, re-rendering calendar.");
+      }, 100);
     });
   });
 }
+
+// Set up MutationObserver to detect when active tab changes
+function observeTabChanges() {
+  const tabPanelContainer = document.querySelector(".p-tabview-panels");
+
+  if (tabPanelContainer) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "aria-hidden"
+        ) {
+          const target = mutation.target as HTMLElement;
+          if (target.getAttribute("aria-hidden") === "false") {
+            console.log("Active tab changed, re-rendering calendar.");
+            setTimeout(attemptRenderCalendar, 100);
+          }
+        }
+      });
+    });
+
+    const panels = tabPanelContainer.querySelectorAll(".p-tabview-panel");
+    panels.forEach((panel) => {
+      observer.observe(panel, { attributes: true });
+    });
+  }
+}
+
 // Observe language changes and article additions
 function observeLanguageChanges() {
   const activeSection = document.querySelector(
@@ -429,5 +474,22 @@ function observeLanguageChanges() {
       subtree: true,
     });
   }
+}
+
+// Listen for storage changes to reload calendar when settings change
+browser.storage.onChanged.addListener(
+  (changes: Record<string, any>, areaName: string) => {
+    if (areaName === "sync" && changes.linkType) {
+      console.log(
+        "Settings changed, reloading calendar. New value:",
+        changes.linkType.newValue
+      );
+      attemptRenderCalendar();
+    }
+  }
+);
 
 attemptRenderCalendar();
+setupClickListener();
+observeTabChanges();
+observeLanguageChanges();
