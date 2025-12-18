@@ -22,6 +22,49 @@ interface Settings {
 
 const exams: Exam[] = [];
 
+// Translations
+const translations = {
+  en: {
+    exportButton: "Export exams you registered for as ICS",
+    noEnrollments: "No exam enrollments found.",
+  },
+  it: {
+    exportButton: "Esporta gli esami a cui sei iscritto come ICS",
+    noEnrollments: "Nessuna iscrizione all'esame trovata.",
+  },
+};
+
+// Detect current language from the page
+function detectLanguage(): "en" | "it" {
+  // Find all buttons that might be the language switcher
+  const buttons = Array.from(
+    document.querySelectorAll("button.pj-link-button")
+  );
+
+  for (const button of buttons) {
+    const text = button.textContent?.trim().toUpperCase();
+    if (text === "EN" || text === "IT") {
+      // Button shows the OTHER language (click to switch to it)
+      // So if button says "EN", current language is "IT" and vice versa
+      return text === "EN" ? "it" : "en";
+    }
+  }
+
+  // Fallback: check for Italian text on the page
+  const pageText = document.body.textContent || "";
+  if (pageText.includes("Iscrizioni") || pageText.includes("Appelli")) {
+    return "it";
+  }
+
+  return "en";
+}
+
+// Get translated text
+function t(key: keyof typeof translations.en): string {
+  const lang = detectLanguage();
+  return translations[lang][key];
+}
+
 // Function to extract exam data from the page
 function extractExamData(): Exam[] {
   const articles = document.querySelectorAll("article");
@@ -135,7 +178,7 @@ function addExportButton() {
     if (!exportButton) {
       exportButton = document.createElement("button");
       exportButton.id = "export-ics-button";
-      exportButton.textContent = "Export exams you registered for as ICS";
+      exportButton.textContent = t("exportButton");
 
       const buttonElement = exportButton as HTMLElement;
       buttonElement.classList.add("p-button", "p-component");
@@ -143,6 +186,9 @@ function addExportButton() {
 
       exportButton.addEventListener("click", generateICS);
       activeSection.appendChild(exportButton);
+    } else {
+      // Update text in case language changed
+      exportButton.textContent = t("exportButton");
     }
   }
 }
@@ -225,19 +271,91 @@ function attemptRenderCalendar() {
       calendar.destroy(); // Destroy the previous calendar instance
     }
 
+    const currentLang = detectLanguage();
+
+    // Create custom Italian locale with capitalized months
+    const customItLocale =
+      currentLang === "it"
+        ? {
+            code: "it",
+            week: {
+              dow: 1,
+              doy: 4,
+            },
+            buttonText: itLocale.buttonText,
+            weekText: itLocale.weekText,
+            allDayText: itLocale.allDayText,
+            moreLinkText: itLocale.moreLinkText,
+            noEventsText: itLocale.noEventsText,
+          }
+        : undefined;
+
     calendar = new Calendar(calendarElement as HTMLElement, {
       plugins: [dayGridPlugin, listPlugin],
       initialView: "dayGridMonth",
       initialDate: exams.length > 0 ? exams[0].shots[0].date : new Date(),
+      locale: customItLocale || currentLang,
       events,
+
+      eventClick: function (info) {
+        const currentSettings = settings; // Capture settings in closure
+
+        if (currentSettings.linkType === "exam-article") {
+          // Prevent default navigation
+          info.jsEvent.preventDefault();
+
+          // Get the article index from the event
+          const articleIndex = info.event.extendedProps.articleIndex;
+
+          // Find and scroll to the article
+          const articles = document.querySelectorAll("article");
+          const targetArticle = articles[articleIndex];
+
+          if (targetArticle) {
+            // Scroll to the article
+            targetArticle.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+
+            // Add a temporary highlight effect
+            targetArticle.style.transition = "background-color 0.3s";
+            const originalBg =
+              window.getComputedStyle(targetArticle).backgroundColor;
+            targetArticle.style.backgroundColor = "rgba(33, 150, 243, 0.1)";
+
+            setTimeout(() => {
+              targetArticle.style.backgroundColor = originalBg;
+            }, 2000);
+          }
+        }
+        // For anxious-display, let the default URL navigation happen
+      },
 
       views: {
         dayGridMonth: {
-          titleFormat: { year: "numeric", month: "long" },
+          titleFormat: (date) => {
+            const month = date.date.marker.toLocaleDateString(currentLang, {
+              month: "long",
+            });
+            const year = date.date.marker.getFullYear();
+            // Capitalize first letter for Italian
+            const capitalizedMonth =
+              month.charAt(0).toUpperCase() + month.slice(1);
+            return `${capitalizedMonth} ${year}`;
+          },
           dayHeaderFormat: { weekday: "long" },
         },
-        listWeek: {
-          titleFormat: { year: "numeric", month: "long" },
+        listMonth: {
+          titleFormat: (date) => {
+            const month = date.date.marker.toLocaleDateString(currentLang, {
+              month: "long",
+            });
+            const year = date.date.marker.getFullYear();
+            const capitalizedMonth =
+              month.charAt(0).toUpperCase() + month.slice(1);
+            return `${capitalizedMonth} ${year}`;
+          },
           dayHeaderFormat: { weekday: "long" },
         },
       },
@@ -245,7 +363,7 @@ function attemptRenderCalendar() {
       headerToolbar: {
         right: "prev,next today",
         center: "title",
-        left: "dayGridMonth,listWeek",
+        left: "dayGridMonth,listMonth",
       },
     });
     calendar.render();
@@ -266,5 +384,50 @@ function setupClickListener() {
     });
   });
 }
+// Observe language changes and article additions
+function observeLanguageChanges() {
+  const activeSection = document.querySelector(
+    '.p-tabview-panel:not([aria-hidden="true"])'
+  );
+
+  if (activeSection) {
+    const observer = new MutationObserver((mutations) => {
+      // Check if articles were added/removed (language change causes content reload)
+      let articlesChanged = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          // Check if article elements were added or removed
+          const addedArticles = Array.from(mutation.addedNodes).some(
+            (node) =>
+              node.nodeName === "ARTICLE" ||
+              (node as Element).querySelector?.("article")
+          );
+          const removedArticles = Array.from(mutation.removedNodes).some(
+            (node) =>
+              node.nodeName === "ARTICLE" ||
+              (node as Element).querySelector?.("article")
+          );
+
+          if (addedArticles || removedArticles) {
+            articlesChanged = true;
+            break;
+          }
+        }
+      }
+
+      if (articlesChanged) {
+        console.log(
+          "Articles changed (language switch detected), re-rendering calendar."
+        );
+        attemptRenderCalendar();
+      }
+    });
+
+    observer.observe(activeSection, {
+      childList: true,
+      subtree: true,
+    });
+  }
 
 attemptRenderCalendar();
