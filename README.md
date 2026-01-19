@@ -30,7 +30,7 @@ A browser extension that adds a calendar view for exams to the Polimi exam page.
 [<img src="https://badges.ws/badge/-Load unpacked on Chrome-red?icon=googlechrome" />](https://github.com/frephs/polimi-exam-calendar/releases/latest)
 
 
-Since the Chrome Web Store insertions are paid, the extension is available for one-click installation only in the Firefox Add-ons store.
+Since publishing an extension on the Chrome Web Store requires creating a developer account and paying a registration fee, the extension is available for one-click installation only in the Firefox Add-ons store, where its updated automatically and for free.
 
 Download the extension from the [Releases page](../../releases) or the [Firefox Add-ons page](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/).
 
