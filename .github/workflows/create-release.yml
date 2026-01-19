@@ -4,54 +4,54 @@ on:
   workflow_dispatch:
     inputs:
       version_type:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
           - minor
           - major
       release_notes:
-        description: 'Release notes (optional)'
+        description: "Release notes (optional)"
         required: false
         type: string
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          
+          node-version: "18"
+          cache: "npm"
+
       - name: Configure Git
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Bump version
         run: npm version ${{ github.event.inputs.version_type }} --no-git-tag-version
-        
+
       - name: Get new version
         id: version
         run: echo "new_version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-        
+
       - name: Update manifest version
         run: |
           node -e "
@@ -60,7 +60,7 @@ jobs:
             manifest.version = '${{ steps.version.outputs.new_version }}';
             fs.writeFileSync('src/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
           "
-          
+
       - name: Build and package extension
         run: |
           echo "Building extension..."
@@ -75,7 +75,7 @@ jobs:
             echo "Error: web-ext-artifacts directory not created"
             exit 1
           fi
-          
+
       - name: Create dist zip
         run: |
           if [ ! -d "dist" ]; then
@@ -89,7 +89,18 @@ jobs:
             echo "Error: dist zip file was not created"
             exit 1
           fi
-          
+
+      - name: Rename web-ext artifact
+        run: |
+          WEBEXT_FILE=$(find web-ext-artifacts -name "*.zip" | head -1)
+          if [ -z "$WEBEXT_FILE" ]; then
+            echo "Error: No extension file found in web-ext-artifacts"
+            exit 1
+          fi
+          echo "Found web-ext file: $WEBEXT_FILE"
+          cp "$WEBEXT_FILE" "polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip"
+          echo "Renamed to: polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip"
+
       - name: Debug file listing
         run: |
           echo "=== Dist directory contents ==="
@@ -97,8 +108,8 @@ jobs:
           echo "=== Web-ext artifacts ==="
           ls -la web-ext-artifacts/
           echo "=== Root directory ZIP files ==="
-          ls -la *.zip || echo "No ZIP files in root"
-          
+          ls -la *.zip
+
       - name: Commit version bump
         run: |
           git add package.json package-lock.json src/manifest.json
@@ -107,29 +118,33 @@ jobs:
           else
             git commit -m "chore: bump version to v${{ steps.version.outputs.new_version }}"
           fi
-          
+
       - name: Create and push tag
         run: |
           git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
           git push origin HEAD --tags
-          
+
       - name: Find extension file
         id: extension_file
         run: |
-          if [ ! -d "web-ext-artifacts" ]; then
-            echo "Error: web-ext-artifacts directory does not exist"
+          EXTENSION_FILE="polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip"
+          DIST_ZIP="polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip"
+
+          if [ ! -f "$EXTENSION_FILE" ]; then
+            echo "Error: Extension file does not exist: $EXTENSION_FILE"
             exit 1
           fi
-          EXTENSION_FILE=$(find web-ext-artifacts -name "*.zip" | head -1)
-          if [ -z "$EXTENSION_FILE" ]; then
-            echo "Error: No extension file found in web-ext-artifacts"
+          if [ ! -f "$DIST_ZIP" ]; then
+            echo "Error: Dist zip file does not exist: $DIST_ZIP"
             exit 1
           fi
+
           echo "Found extension file: $EXTENSION_FILE"
+          echo "Found dist zip: $DIST_ZIP"
           echo "path=$EXTENSION_FILE" >> $GITHUB_OUTPUT
           echo "filename=$(basename $EXTENSION_FILE)" >> $GITHUB_OUTPUT
-          echo "dist_zip=polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip" >> $GITHUB_OUTPUT
-          
+          echo "dist_zip=$DIST_ZIP" >> $GITHUB_OUTPUT
+
       - name: Verify release files
         run: |
           echo "Verifying release files exist..."
@@ -142,7 +157,7 @@ jobs:
             exit 1
           fi
           echo "All release files verified successfully"
-          
+
       - name: Generate changelog
         id: changelog
         run: |
@@ -151,7 +166,7 @@ jobs:
           else
             echo "custom_notes=" >> $GITHUB_OUTPUT
           fi
-          
+
           # Get commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
@@ -162,7 +177,7 @@ jobs:
           else
             echo "commits=- Initial release" >> $GITHUB_OUTPUT
           fi
-          
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -171,39 +186,39 @@ jobs:
           name: Release v${{ steps.version.outputs.new_version }}
           body: |
             ## Polimi Exam Calendar Extension v${{ steps.version.outputs.new_version }}
-            
+
             ${{ steps.changelog.outputs.custom_notes && steps.changelog.outputs.custom_notes || '' }}
-            
+
             ### Changes
             ${{ steps.changelog.outputs.commits }}
-            
+
             ### Installation Instructions
-            
+
             **Download Options:**
             - `polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip` - Ready-to-use extension package (recommended)
             - `polimi-exam-calendar-dist-v${{ steps.version.outputs.new_version }}.zip` - Just the built files (for advanced users)
-            
+
             **For Chrome/Edge:**
             1. Download the extension ZIP file (`polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip`)
             2. Extract the ZIP file to a folder
             3. Open Chrome/Edge and go to `chrome://extensions/` or `edge://extensions/`
             4. Enable "Developer mode" (toggle in top right)
             5. Click "Load unpacked" and select the extracted folder
-            
+
             **For Firefox:**
             1. Download the extension ZIP file (`polimi-exam-calendar-v${{ steps.version.outputs.new_version }}.zip`)
             2. Open Firefox and go to `about:debugging`
             3. Click "This Firefox"
             4. Click "Load Temporary Add-on"
             5. Select the ZIP file directly (no need to extract)
-            
+
             ### What's New
             - Extension has been built and tested automatically
             - All dependencies are up to date
             - Compatible with latest browser versions
-            
+
             ---
-            
+
             **Download the extension below ⬇️**
           files: |
             ${{ steps.extension_file.outputs.path }}
