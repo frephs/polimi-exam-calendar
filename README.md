@@ -8,7 +8,7 @@
 
 A browser extension that adds a calendar view for exams to the Polimi exam page.
 
-<img src="src/demo.gif" style="border-radius: 8px; width: 100%;">
+<img src="src/demo.gif" style="border-radius: 20px; width: 100%;">
 
 ## Download and Installation
 [![Firefox Add-ons page](https://img.shields.io/badge/Firefox%20Add--ons%20page-FF7139?style=flat&logo=firefox&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/)
