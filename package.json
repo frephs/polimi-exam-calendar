@@ -1,6 +1,6 @@
 {
   "name": "polimi-exam-calendar",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Adds a calendar view for exams to the Polimi exam page.",
   "main": "dist/contentScript.js",
   "scripts": {
