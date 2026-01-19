@@ -21,7 +21,7 @@ A browser extension that adds a calendar view for exams to the Polimi exam page.
 ## Features
 - **Calendar View**: Displays exams in a calendar format.
 - **ICS Export**: Allows exporting the exam schedule as an ICS file for integration with other calendar applications.
-- **Popup Interface**: Choose between scrolling to the exam section or opening a countdown to the calendar on [the anxious display](https://the-anxious-display.vercel.app/). 
+- **Popup Interface**: Choose between scrolling to the exam section or opening a countdown to the exam on [the anxious display](https://the-anxious-display.vercel.app/). 
 
 
 
