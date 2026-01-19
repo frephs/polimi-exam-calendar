@@ -11,10 +11,13 @@ interface Settings {
 
 // Load saved settings
 async function loadSettings(): Promise<Settings> {
-  const result = await browserAPI.storage.sync.get({
-    linkType: "exam-article",
-  });
-  return result as Settings;
+  const result = await browserAPI.storage.sync.get("linkType");
+
+  // Return exam-article as default if not set, but don't save it
+  // This allows the calendar to work while keeping the notification dot
+  return {
+    linkType: (result.linkType as "anxious-display" | "exam-article") || "exam-article",
+  };
 }
 
 // Save settings

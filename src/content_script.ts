@@ -242,13 +242,19 @@ function addExportButton() {
 
 // Load settings from storage
 async function loadSettings(): Promise<Settings> {
-  const result = await browserAPI.storage.sync.get("linkType");
+  try {
+    const result = await browserAPI.storage.sync.get("linkType");
 
-  // Return exam-article as default if not set, but don't save it
-  // This allows the calendar to work while keeping the notification dot
-  return {
-    linkType: result.linkType || "exam-article",
-  };
+    // Return exam-article as default if not set, but don't save it
+    // This allows the calendar to work while keeping the notification dot
+    const linkType =
+      (result.linkType as "anxious-display" | "exam-article") || "exam-article";
+
+    return { linkType };
+  } catch (error) {
+    console.error("Error loading settings, using default:", error);
+    return { linkType: "exam-article" };
+  }
 }
 
 // Modify the script to continuously attempt rendering until the active tab is found
