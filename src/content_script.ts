@@ -177,6 +177,18 @@ function parseDate(dateText: string | undefined): Date | null {
 }
 
 let calendar: Calendar | null = null;
+let renderTimeout: number | null = null;
+
+// Debounced version of attemptRenderCalendar to prevent excessive re-renders
+function debouncedRenderCalendar() {
+  if (renderTimeout) {
+    clearTimeout(renderTimeout);
+  }
+  renderTimeout = window.setTimeout(() => {
+    attemptRenderCalendar();
+    renderTimeout = null;
+  }, 150);
+}
 
 // Function to generate an ICS file for enrolled exams
 function generateICS() {
@@ -445,7 +457,7 @@ function setupClickListener() {
     tab.addEventListener("click", () => {
       // Delay to allow tab content to load
       setTimeout(() => {
-        attemptRenderCalendar();
+        debouncedRenderCalendar();
         console.log("Tab clicked, re-rendering calendar.");
       }, 100);
     });
@@ -466,7 +478,7 @@ function observeTabChanges() {
           const target = mutation.target as HTMLElement;
           if (target.getAttribute("aria-hidden") === "false") {
             console.log("Active tab changed, re-rendering calendar.");
-            setTimeout(attemptRenderCalendar, 100);
+            debouncedRenderCalendar();
           }
         }
       });
@@ -515,7 +527,7 @@ function observeLanguageChanges() {
         console.log(
           "Articles changed (language switch detected), re-rendering calendar.",
         );
-        attemptRenderCalendar();
+        debouncedRenderCalendar();
       }
     });
 
@@ -535,14 +547,14 @@ function observeNavigation() {
     if (url !== lastUrl) {
       lastUrl = url;
       console.log("URL changed, re-rendering calendar.");
-      setTimeout(attemptRenderCalendar, 300);
+      debouncedRenderCalendar();
     }
   }).observe(document, { subtree: true, childList: true });
 
   // Also listen for popstate events (browser back/forward)
   window.addEventListener("popstate", () => {
     console.log("Navigation detected (popstate), re-rendering calendar.");
-    setTimeout(attemptRenderCalendar, 300);
+    debouncedRenderCalendar();
   });
 
   // Listen for pushstate/replacestate
@@ -552,13 +564,13 @@ function observeNavigation() {
   history.pushState = function (...args) {
     originalPushState.apply(this, args);
     console.log("Navigation detected (pushState), re-rendering calendar.");
-    setTimeout(attemptRenderCalendar, 300);
+    debouncedRenderCalendar();
   };
 
   history.replaceState = function (...args) {
     originalReplaceState.apply(this, args);
     console.log("Navigation detected (replaceState), re-rendering calendar.");
-    setTimeout(attemptRenderCalendar, 300);
+    debouncedRenderCalendar();
   };
 }
 

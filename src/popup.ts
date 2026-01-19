@@ -16,7 +16,8 @@ async function loadSettings(): Promise<Settings> {
   // Return exam-article as default if not set, but don't save it
   // This allows the calendar to work while keeping the notification dot
   return {
-    linkType: (result.linkType as "anxious-display" | "exam-article") || "exam-article",
+    linkType:
+      (result.linkType as "anxious-display" | "exam-article") || "exam-article",
   };
 }
 
