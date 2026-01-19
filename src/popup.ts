@@ -1,12 +1,17 @@
 // popup.ts - Settings popup for the extension
 
+// Chrome/Firefox compatibility: Use chrome API if available, otherwise browser API
+const browserAPI = (
+  typeof chrome !== "undefined" && chrome.storage ? chrome : browser
+) as typeof browser;
+
 interface Settings {
   linkType: "anxious-display" | "exam-article";
 }
 
 // Load saved settings
 async function loadSettings(): Promise<Settings> {
-  const result = await browser.storage.sync.get({
+  const result = await browserAPI.storage.sync.get({
     linkType: "exam-article",
   });
   return result as Settings;
@@ -14,7 +19,7 @@ async function loadSettings(): Promise<Settings> {
 
 // Save settings
 async function saveSettings(settings: Settings): Promise<void> {
-  await browser.storage.sync.set(settings);
+  await browserAPI.storage.sync.set(settings);
 }
 
 // Initialize popup
@@ -23,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Set the selected radio button
   const radioButton = document.getElementById(
-    settings.linkType
+    settings.linkType,
   ) as HTMLInputElement;
   if (radioButton) {
     radioButton.checked = true;

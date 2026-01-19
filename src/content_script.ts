@@ -4,6 +4,11 @@ import listPlugin from "@fullcalendar/list";
 import itLocale from "@fullcalendar/core/locales/it";
 import "./styles.css";
 
+// Chrome/Firefox compatibility: Use chrome API if available, otherwise browser API
+const browserAPI = (
+  typeof chrome !== "undefined" && chrome.storage ? chrome : browser
+) as typeof browser;
+
 // Interface to define the structure of Exam objects
 interface Exam {
   title: string;
@@ -39,7 +44,7 @@ const translations = {
 function detectLanguage(): "en" | "it" {
   // Find all buttons that might be the language switcher
   const buttons = Array.from(
-    document.querySelectorAll("button.pj-link-button")
+    document.querySelectorAll("button.pj-link-button"),
   );
 
   for (const button of buttons) {
@@ -71,7 +76,7 @@ function extractExamData(): Exam[] {
   const articles = document.querySelectorAll("article");
 
   const activeTabIndex = Array.from(
-    document.querySelectorAll(".p-tabview-nav li")
+    document.querySelectorAll(".p-tabview-nav li"),
   ).findIndex((tab) => tab.classList.contains("p-highlight"));
 
   articles.forEach((card, index) => {
@@ -133,7 +138,7 @@ function parseDate(dateText: string | undefined): Date | null {
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i, 1)
       .toLocaleString("it-IT", { month: "short" })
-      .toUpperCase()
+      .toUpperCase(),
   );
 
   const month = months.indexOf(monthStr.toUpperCase());
@@ -148,7 +153,7 @@ let calendar: Calendar | null = null;
 // Function to generate an ICS file for enrolled exams
 function generateICS() {
   const enrolledExams = exams.filter((exam) =>
-    exam.shots?.some((shot) => shot.enrolled)
+    exam.shots?.some((shot) => shot.enrolled),
   );
 
   let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\n";
@@ -184,7 +189,7 @@ function generateICS() {
 // Add export button to the calendar
 function addExportButton() {
   const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])'
+    '.p-tabview-panel:not([aria-hidden="true"])',
   );
 
   if (activeSection) {
@@ -209,7 +214,7 @@ function addExportButton() {
 
 // Load settings from storage
 async function loadSettings(): Promise<Settings> {
-  const result = await browser.storage.sync.get({
+  const result = await browserAPI.storage.sync.get({
     linkType: "exam-article",
   });
   return result as Settings;
@@ -220,7 +225,7 @@ async function attemptRenderCalendar() {
   exams.length = 0;
   extractExamData();
   const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])'
+    '.p-tabview-panel:not([aria-hidden="true"])',
   );
 
   exams.some((exam) => exam.shots.some((shot) => shot.enrolled))
@@ -277,7 +282,7 @@ async function attemptRenderCalendar() {
             articleIndex: exam.articleIndex,
           },
         };
-      })
+      }),
     );
 
     if (calendar) {
@@ -432,7 +437,7 @@ function observeTabChanges() {
 // Observe language changes and article additions
 function observeLanguageChanges() {
   const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])'
+    '.p-tabview-panel:not([aria-hidden="true"])',
   );
 
   if (activeSection) {
@@ -446,12 +451,12 @@ function observeLanguageChanges() {
           const addedArticles = Array.from(mutation.addedNodes).some(
             (node) =>
               node.nodeName === "ARTICLE" ||
-              (node as Element).querySelector?.("article")
+              (node as Element).querySelector?.("article"),
           );
           const removedArticles = Array.from(mutation.removedNodes).some(
             (node) =>
               node.nodeName === "ARTICLE" ||
-              (node as Element).querySelector?.("article")
+              (node as Element).querySelector?.("article"),
           );
 
           if (addedArticles || removedArticles) {
@@ -463,7 +468,7 @@ function observeLanguageChanges() {
 
       if (articlesChanged) {
         console.log(
-          "Articles changed (language switch detected), re-rendering calendar."
+          "Articles changed (language switch detected), re-rendering calendar.",
         );
         attemptRenderCalendar();
       }
@@ -477,16 +482,16 @@ function observeLanguageChanges() {
 }
 
 // Listen for storage changes to reload calendar when settings change
-browser.storage.onChanged.addListener(
+browserAPI.storage.onChanged.addListener(
   (changes: Record<string, any>, areaName: string) => {
     if (areaName === "sync" && changes.linkType) {
       console.log(
         "Settings changed, reloading calendar. New value:",
-        changes.linkType.newValue
+        changes.linkType.newValue,
       );
       attemptRenderCalendar();
     }
-  }
+  },
 );
 
 attemptRenderCalendar();
