@@ -20,6 +20,7 @@ interface Exam {
 interface ExamShot {
   date: Date;
   enrolled: boolean;
+  awaitingResults: boolean;
 }
 
 interface Settings {
@@ -98,6 +99,14 @@ function extractExamData(): Exam[] {
 
     const icons = Array.from(card.querySelectorAll(iconsSelector));
 
+    // Check for "awaiting results" status
+    // In first tab: check for p-chip-text with "In attesa di esito" or "awaiting results"
+    // In third tab (index 2): all exams are awaiting results
+    const chipTexts = Array.from(card.querySelectorAll(".p-chip-text"));
+    const awaitingResultsInTab = activeTabIndex === 2; // Third tab (esiti/results)
+
+    const dateElements = Array.from(card.querySelectorAll(dateQuerySelector));
+
     // Just grab the first link in the article
     const mainLink = card.querySelector("a[href]");
     const articleUrl = mainLink
@@ -109,14 +118,33 @@ function extractExamData(): Exam[] {
         title,
         articleUrl,
         articleIndex: index,
-        shots: dates.map((date, i) => ({
-          date,
-          enrolled: icons[i]
+        shots: dates.map((date, i) => {
+          const enrolled = icons[i]
             ?.getAttribute("class")
             ?.includes("pmi-line-check-circle")
             ? true
-            : false,
-        })),
+            : false;
+
+          // Check if this specific shot is awaiting results
+          let awaitingResults = awaitingResultsInTab;
+          if (!awaitingResults && activeTabIndex === 0 && dateElements[i]) {
+            // In first tab, check the chip text associated with this date
+            const dateElement = dateElements[i] as HTMLElement;
+            const chipText =
+              dateElement
+                .querySelector(".p-chip-text")
+                ?.textContent?.toLowerCase() || "";
+            awaitingResults =
+              chipText.includes("in attesa di esito") ||
+              chipText.includes("awaiting results");
+          }
+
+          return {
+            date,
+            enrolled,
+            awaitingResults,
+          };
+        }),
       });
     }
   });
@@ -214,10 +242,13 @@ function addExportButton() {
 
 // Load settings from storage
 async function loadSettings(): Promise<Settings> {
-  const result = await browserAPI.storage.sync.get({
-    linkType: "exam-article",
-  });
-  return result as Settings;
+  const result = await browserAPI.storage.sync.get("linkType");
+
+  // Return exam-article as default if not set, but don't save it
+  // This allows the calendar to work while keeping the notification dot
+  return {
+    linkType: result.linkType || "exam-article",
+  };
 }
 
 // Modify the script to continuously attempt rendering until the active tab is found
@@ -272,10 +303,18 @@ async function attemptRenderCalendar() {
           console.log("Using anxious display URL");
         }
 
+        // Determine color: dark yellow for awaiting results, green for enrolled, blue for others
+        let color = "#2196F3"; // Default blue
+        if (shot.awaitingResults) {
+          color = "#B8860B"; // Dark goldenrod (good contrast)
+        } else if (shot.enrolled) {
+          color = "#4CAF50"; // Green
+        }
+
         return {
           title: exam.title,
           start: shot.date.toISOString(),
-          color: shot.enrolled ? "#4CAF50" : "#2196F3",
+          color: color,
           allDay: true,
           url: eventUrl,
           extendedProps: {
@@ -481,6 +520,42 @@ function observeLanguageChanges() {
   }
 }
 
+// Observe URL/navigation changes for SPA navigation
+function observeNavigation() {
+  // Watch for URL changes (back/forward navigation)
+  let lastUrl = location.href;
+  new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      console.log("URL changed, re-rendering calendar.");
+      setTimeout(attemptRenderCalendar, 300);
+    }
+  }).observe(document, { subtree: true, childList: true });
+
+  // Also listen for popstate events (browser back/forward)
+  window.addEventListener("popstate", () => {
+    console.log("Navigation detected (popstate), re-rendering calendar.");
+    setTimeout(attemptRenderCalendar, 300);
+  });
+
+  // Listen for pushstate/replacestate
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function (...args) {
+    originalPushState.apply(this, args);
+    console.log("Navigation detected (pushState), re-rendering calendar.");
+    setTimeout(attemptRenderCalendar, 300);
+  };
+
+  history.replaceState = function (...args) {
+    originalReplaceState.apply(this, args);
+    console.log("Navigation detected (replaceState), re-rendering calendar.");
+    setTimeout(attemptRenderCalendar, 300);
+  };
+}
+
 // Listen for storage changes to reload calendar when settings change
 browserAPI.storage.onChanged.addListener(
   (changes: Record<string, any>, areaName: string) => {
@@ -498,3 +573,4 @@ attemptRenderCalendar();
 setupClickListener();
 observeTabChanges();
 observeLanguageChanges();
+observeNavigation();
