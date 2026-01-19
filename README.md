@@ -2,6 +2,7 @@
 ![Version](https://img.shields.io/github/v/release/frephs/polimi-exam-calendar?style=round)
 ![License](https://img.shields.io/github/license/frephs/polimi-exam-calendar)
 ![Build](https://img.shields.io/github/actions/workflow/status/frephs/polimi-exam-calendar/ci.yml?style=round?label=build)
+![Downloads](https://img.shields.io/github/downloads/frephs/polimi-exam-calendar/total?style=round)
 
 
 
@@ -12,6 +13,8 @@ A browser extension that adds a calendar view for exams to the Polimi exam page.
 
 ## Download and Installation
 [![Firefox Add-ons page](https://img.shields.io/badge/Firefox%20Add--ons%20page-FF7139?style=flat&logo=firefox&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/)
+[<img src="https://badges.ws/badge/-Load unpacked on Chrome-red?icon=googlechrome" />](https://github.com/frephs/polimi-exam-calendar/releases/latest)
+
 
 Since the Chrome Web Store insertions are paid, the extension is available for one-click installation only in the Firefox Add-ons store.
 
