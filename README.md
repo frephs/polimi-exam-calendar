@@ -3,12 +3,27 @@
 ![License](https://img.shields.io/github/license/frephs/polimi-exam-calendar)
 ![Build](https://img.shields.io/github/actions/workflow/status/frephs/polimi-exam-calendar/ci.yml?style=round?label=build)
 ![Downloads](https://img.shields.io/github/downloads/frephs/polimi-exam-calendar/total?style=round)
+[![Firefox Add-ons page](https://img.shields.io/badge/Firefox%20Add--ons%20page-FF7139?style=flat&logo=firefox&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/)
+[<img src="https://badges.ws/badge/-Load unpacked on Chrome-red?icon=googlechrome" />](https://github.com/frephs/polimi-exam-calendar/releases/latest)
+
 
 
 
 A browser extension that adds a calendar view for exams to the Polimi exam page.
 
+## Demo 
 <img src="src/demo.gif" style="border-radius: 20px; width: 100%;">
+
+
+### Popup action:
+<img src="src/popup-demo.png" alt="Popup Demo" width="400">
+
+## Features
+- **Calendar View**: Displays exams in a calendar format.
+- **ICS Export**: Allows exporting the exam schedule as an ICS file for integration with other calendar applications.
+- **Popup Interface**: Choose between scrolling to the exam section or opening a countdown to the calendar on [the anxious display](https://the-anxious-display.vercel.app/). 
+
+
 
 ## Download and Installation
 [![Firefox Add-ons page](https://img.shields.io/badge/Firefox%20Add--ons%20page-FF7139?style=flat&logo=firefox&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/)
@@ -36,10 +51,6 @@ To manually install the extension, follow these steps:
 4. Click "Load Temporary Add-on" and select the extracted `dist/manifest.json` file.
 
 
-
-## Features
-- **Calendar View**: Displays exams in a calendar format.
-- **ICS Export**: Allows exporting the exam schedule as an ICS file for integration with other calendar applications.
 
 
 ## Development Setup and Contributing
