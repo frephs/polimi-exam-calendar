@@ -21,6 +21,10 @@ interface ExamShot {
   date: Date;
   enrolled: boolean;
   awaitingResults: boolean;
+  result?: number;
+  resultStatus?: string;
+  rejectionDeadline?: Date;
+  rejectable?: boolean;
 }
 
 interface Settings {
@@ -74,11 +78,13 @@ function t(key: keyof typeof translations.en): string {
 
 // Function to extract exam data from the page
 function extractExamData(): Exam[] {
-  const articles = document.querySelectorAll("article");
-
   const activeTabIndex = Array.from(
     document.querySelectorAll(".p-tabview-nav li"),
   ).findIndex((tab) => tab.classList.contains("p-highlight"));
+
+  let articles: NodeListOf<Element>;
+
+  articles = document.querySelectorAll("article");
 
   articles.forEach((card, index) => {
     const titleQuerySelector =
@@ -86,11 +92,15 @@ function extractExamData(): Exam[] {
     const dateQuerySelector =
       activeTabIndex === 0
         ? "section > div:not(div:nth-child(1))"
-        : "div:not(div:nth-child(1))";
+        : activeTabIndex === 2
+          ? "article.pj-item-card-wide section div.pt-1"
+          : "div:not(div:nth-child(1))";
     const iconsSelector =
       activeTabIndex === 0
         ? "section > div:not(div:nth-child(1)) i"
-        : "div:not(div:nth-child(1)) i";
+        : activeTabIndex === 2
+          ? "article.pj-item-card-wide section div.pt-1 i"
+          : "div:not(div:nth-child(1)) i";
 
     const title = card.querySelector(titleQuerySelector)?.textContent?.trim();
     const dates = Array.from(card.querySelectorAll(dateQuerySelector))
@@ -139,10 +149,139 @@ function extractExamData(): Exam[] {
               chipText.includes("awaiting results");
           }
 
+          // Parse result information
+          let result: number | undefined;
+          let resultStatus: string | undefined;
+          let rejectionDeadline: Date | undefined;
+          let rejectable: boolean | undefined;
+
+          const dateElement = dateElements[i] as HTMLElement;
+
+          // Look for result score - search in parent context since result grid is a sibling
+          // The structure is: date div, then sibling div.ml-4.mt-2 with the grid containing result
+          let parentSection =
+            dateElement.closest("section") || dateElement.parentElement;
+
+          // In tab2, dateElements are nested deeper
+          if (activeTabIndex === 2) {
+            parentSection = dateElement.closest("article.pj-item-card-wide");
+          }
+
+          if (parentSection) {
+            // Find all .pj-big-letters in the parent and try to match with our date
+            // For simplicity, look for the next sibling with ml-4 class after the date element
+            let nextSibling = dateElement.nextElementSibling;
+
+            // In tab2, the result grid is also a sibling
+            if (activeTabIndex === 2) {
+              nextSibling =
+                dateElement.closest("div.pt-1")?.nextElementSibling || null;
+            }
+
+            // In tab0, look for sibling that contains ml-4 class
+            if (activeTabIndex === 0) {
+              // In tab0, dateElement is div.mt-1, we need to find div.pt-1 inside it first
+              const dateInfoDiv = dateElement.querySelector("div.pt-1");
+              if (dateInfoDiv) {
+                // Now look for sibling with ml-4 class
+                let sibling = dateInfoDiv.nextElementSibling;
+                while (sibling && !sibling.classList.contains("ml-4")) {
+                  sibling = sibling.nextElementSibling;
+                }
+                nextSibling = sibling;
+              }
+            } else {
+              // For other tabs, keep original logic
+              while (nextSibling && !nextSibling.classList.contains("ml-4")) {
+                nextSibling = nextSibling.nextElementSibling;
+              }
+            }
+
+            if (nextSibling) {
+              // Look for result score in the grid
+              const resultElement =
+                nextSibling.querySelector(".pj-big-letters");
+              if (resultElement) {
+                const resultText = resultElement.textContent?.trim();
+                if (resultText && !isNaN(parseInt(resultText))) {
+                  result = parseInt(resultText);
+                  console.log(
+                    `Found result ${result} for ${title} in tab${activeTabIndex}`,
+                  );
+                }
+              }
+
+              // Look for "Rejectable" text (first tab)
+              const rejectableText =
+                nextSibling.textContent?.toLowerCase() || "";
+              if (
+                rejectableText.includes("rejectable") ||
+                rejectableText.includes("rifiutabile")
+              ) {
+                rejectable = true;
+              }
+
+              // Look for status - PUBBLICATO/PUBLISHED means it's not awaiting anymore
+              const statusDiv = nextSibling.querySelector(".capital-letter");
+              if (statusDiv) {
+                resultStatus = statusDiv.textContent?.trim();
+                const statusText = resultStatus?.toLowerCase() || "";
+                if (
+                  statusText.includes("pubblicato") ||
+                  statusText.includes("published")
+                ) {
+                  // Result is published, not awaiting
+                  awaitingResults = false;
+                }
+              }
+            }
+          }
+
+          // If we found a result in tab0 and it's rejectable, it's published (not awaiting)
+          if (activeTabIndex === 0 && result !== undefined && rejectable) {
+            awaitingResults = false;
+          }
+
+          // Look for rejection deadline (tab2 or tab0 with results)
+          if (
+            activeTabIndex === 2 ||
+            (activeTabIndex === 0 && result !== undefined)
+          ) {
+            const dateElem = dateElements[i] as HTMLElement;
+            let searchContext =
+              dateElem.closest("section") || dateElem.parentElement;
+
+            if (activeTabIndex === 2) {
+              searchContext = dateElem.closest("article.pj-item-card-wide");
+            }
+
+            const rejectionSection = searchContext?.querySelector(
+              ".col-6.pj-pt-content, .pj-pt-content",
+            );
+            if (rejectionSection) {
+              const deadlineText = rejectionSection.textContent;
+              const deadlineMatch = deadlineText?.match(
+                /(\d{1,2})\s*([A-Z]{3})\s*(\d{4})\s*(\d{2}):(\d{2})/i,
+              );
+              if (deadlineMatch) {
+                const [_, day, month, year, hour, minute] = deadlineMatch;
+                const parsedDate = parseDate(`${day}${month}${year}`);
+                if (parsedDate) {
+                  rejectionDeadline = new Date(parsedDate);
+                  rejectionDeadline.setHours(parseInt(hour), parseInt(minute));
+                }
+              }
+            }
+          }
+
           return {
             date,
             enrolled,
             awaitingResults,
+            result,
+            resultStatus,
+            rejectionDeadline,
+            rejectable,
           };
         }),
       });
@@ -163,13 +302,23 @@ function parseDate(dateText: string | undefined): Date | null {
   const day = Number(dayStr);
   const year = Number(yearStr);
 
-  const months = Array.from({ length: 12 }, (_, i) =>
+  // Build month arrays for both Italian and English
+  const italianMonths = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i, 1)
       .toLocaleString("it-IT", { month: "short" })
       .toUpperCase(),
   );
+  const englishMonths = Array.from({ length: 12 }, (_, i) =>
+    new Date(2000, i, 1)
+      .toLocaleString("en-US", { month: "short" })
+      .toUpperCase(),
+  );
 
-  const month = months.indexOf(monthStr.toUpperCase());
+  const monthUpper = monthStr.toUpperCase();
+  let month = italianMonths.indexOf(monthUpper);
+  if (month === -1) {
+    month = englishMonths.indexOf(monthUpper);
+  }
   if (month === -1) return null;
 
   const date = new Date(year, month, day);
@@ -224,6 +373,81 @@ function generateICS() {
   link.click();
 
   URL.revokeObjectURL(url);
+}
+
+// Add legend below calendar
+function addLegend(activeSection: Element, events: any[]) {
+  let legendElement = activeSection.querySelector("#calendar-legend");
+
+  if (!legendElement) {
+    legendElement = document.createElement("div");
+    legendElement.id = "calendar-legend";
+    (legendElement as HTMLElement).style.cssText = `
+      margin: 10px 10px 10px 10px;
+      padding: 10px;
+      border: 1px solid var(--bg-secondary-dark, #ccc);
+      border-radius: var(--border-radius, 4px);
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      max-width: calc(100% - 20px);
+      box-sizing: border-box;
+    `;
+    activeSection.appendChild(legendElement);
+  }
+
+  // Sort events by date to get the display order
+  const sortedEvents = [...events].sort(
+    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+  );
+
+  // Get unique colors in the order they appear in sorted events
+  const colorMap = new Map<string, string>();
+
+  sortedEvents.forEach((event) => {
+    const color = event.color;
+    if (!colorMap.has(color)) {
+      let label = "";
+      if (color === "#D32F2F") {
+        label =
+          detectLanguage() === "it" ? "Scadenza rifiuto" : "Rejection deadline";
+      } else if (color === "#9C27B0") {
+        label =
+          detectLanguage() === "it" ? "Esito pubblicato" : "Published result";
+      } else if (color === "#B8860B") {
+        label =
+          detectLanguage() === "it" ? "In attesa di esito" : "Awaiting results";
+      } else if (color === "#4CAF50") {
+        label = detectLanguage() === "it" ? "Iscritto" : "Enrolled";
+      } else if (color === "#2196F3") {
+        label = detectLanguage() === "it" ? "Non iscritto" : "Not enrolled";
+      }
+      colorMap.set(color, label);
+    }
+  });
+
+  // Build legend HTML
+  let legendHTML =
+    '<strong style="margin-right: 10px;">' +
+    (detectLanguage() === "it" ? "Legenda:" : "Legend:") +
+    "</strong>";
+
+  colorMap.forEach((label, color) => {
+    legendHTML += `
+      <div style="display: flex; align-items: center; gap: 5px;">
+        <div style="
+          width: 16px;
+          height: 16px;
+          background-color: ${color};
+          border-radius: 2px;
+        "></div>
+        <span>${label}</span>
+      </div>
+    `;
+  });
+
+  legendElement.innerHTML = legendHTML;
 }
 
 // Add export button to the calendar
@@ -298,48 +522,101 @@ async function attemptRenderCalendar() {
     const settings = await loadSettings();
     console.log("Current link type setting:", settings.linkType);
 
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Set to start of today
+
     const events = exams.flatMap((exam) =>
-      exam.shots.map((shot, i) => {
-        let eventUrl: string | undefined;
+      exam.shots
+        .filter((shot) => {
+          // Include future exams, or past exams that have results or are awaiting results
+          const isPast = shot.date < now;
+          return !isPast || shot.awaitingResults || shot.result !== undefined;
+        })
+        .flatMap((shot, i) => {
+          let eventUrl: string | undefined;
 
-        if (settings.linkType === "exam-article") {
-          // Use a fake URL with article index as a marker
-          eventUrl = `#article-${exam.articleIndex}`;
-          console.log("Using article scroll to index:", exam.articleIndex);
-        } else {
-          // Default to anxious display
-          let url = Array.from([
-            {
-              title: exam.title,
-              description: "imported from polimi-exam-calendar",
-              date: shot.date.toISOString(),
-            },
-          ]);
-          const urlParam = btoa(JSON.stringify(url));
-          eventUrl =
-            "https://the-anxious-display.vercel.app/?countdowns=" + urlParam;
-          console.log("Using anxious display URL");
-        }
+          if (settings.linkType === "exam-article") {
+            // Use a fake URL with article index as a marker
+            eventUrl = `#article-${exam.articleIndex}`;
+            console.log("Using article scroll to index:", exam.articleIndex);
+          } else {
+            // Default to anxious display
+            let url = Array.from([
+              {
+                title: exam.title,
+                description: "imported from polimi-exam-calendar",
+                date: shot.date.toISOString(),
+              },
+            ]);
+            const urlParam = btoa(JSON.stringify(url));
+            eventUrl =
+              "https://the-anxious-display.vercel.app/?countdowns=" + urlParam;
+            console.log("Using anxious display URL");
+          }
 
-        // Determine color: dark yellow for awaiting results, green for enrolled, blue for others
-        let color = "#2196F3"; // Default blue
-        if (shot.awaitingResults) {
-          color = "#B8860B"; // Dark goldenrod (good contrast)
-        } else if (shot.enrolled) {
-          color = "#4CAF50"; // Green
-        }
+          // Determine color:
+          // - Purple for published results (has result but not awaiting)
+          // - Dark yellow for awaiting results
+          // - Green for enrolled (future exams)
+          // - Blue for others
+          let color = "#2196F3"; // Default blue
+          if (shot.result !== undefined && !shot.awaitingResults) {
+            color = "#9C27B0"; // Purple for published results
+          } else if (shot.awaitingResults) {
+            color = "#B8860B"; // Dark goldenrod (awaiting results)
+          } else if (shot.enrolled) {
+            color = "#4CAF50"; // Green for enrolled
+          }
 
-        return {
-          title: exam.title,
-          start: shot.date.toISOString(),
-          color: color,
-          allDay: true,
-          url: eventUrl,
-          extendedProps: {
-            articleIndex: exam.articleIndex,
-          },
-        };
-      }),
+          // Add result to title if available
+          let displayTitle = exam.title;
+          if (shot.result !== undefined) {
+            displayTitle += ` - ${shot.result}`;
+            if (shot.rejectable) {
+              displayTitle += " (Rejectable)";
+            }
+          }
+
+          const mainEvent = {
+            title: displayTitle,
+            start: shot.date.toISOString(),
+            color: color,
+            allDay: true,
+            url: eventUrl,
+            extendedProps: {
+              articleIndex: exam.articleIndex,
+              result: shot.result,
+              rejectable: shot.rejectable,
+              awaitingResults: shot.awaitingResults,
+            } as any,
+          };
+
+          // Add rejection deadline event if available (from tab2)
+          const eventsToReturn = [mainEvent];
+          if (shot.rejectionDeadline && shot.rejectable) {
+            const lang = detectLanguage();
+            const deadlineTitle = `${exam.title}`;
+
+            // Create end time 15 minutes after start
+            const endTime = new Date(shot.rejectionDeadline);
+            endTime.setMinutes(endTime.getMinutes() + 15);
+
+            eventsToReturn.push({
+              title: deadlineTitle,
+              start: shot.rejectionDeadline.toISOString(),
+              end: endTime.toISOString(),
+              color: "#D32F2F", // Red for deadline
+              allDay: false,
+              url: eventUrl,
+              extendedProps: {
+                articleIndex: exam.articleIndex,
+                isDeadline: true,
+              },
+            } as any);
+          }
+
+          return eventsToReturn;
+        }),
     );
 
     if (calendar) {
@@ -422,16 +699,17 @@ async function attemptRenderCalendar() {
           dayHeaderFormat: { weekday: "long" },
         },
         listMonth: {
-          titleFormat: (date) => {
-            const month = date.date.marker.toLocaleDateString(currentLang, {
-              month: "long",
-            });
-            const year = date.date.marker.getFullYear();
-            const capitalizedMonth =
-              month.charAt(0).toUpperCase() + month.slice(1);
-            return `${capitalizedMonth} ${year}`;
+          listDayFormat: {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
           },
-          dayHeaderFormat: { weekday: "long" },
+          listDaySideFormat: false,
+          noEventsContent:
+            currentLang === "it"
+              ? "Nessun esame da visualizzare"
+              : "No exams to display",
         },
       },
 
@@ -442,6 +720,9 @@ async function attemptRenderCalendar() {
       },
     });
     calendar.render();
+
+    // Add legend below calendar
+    addLegend(activeSection, events);
 
     setupClickListener();
   } else {
