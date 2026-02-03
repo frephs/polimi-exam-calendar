@@ -1,15 +1,13 @@
-import { Calendar } from "@fullcalendar/core";
+import { Calendar, EventInput } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import listPlugin from "@fullcalendar/list";
 import itLocale from "@fullcalendar/core/locales/it";
 import "./styles.css";
 
-// Chrome/Firefox compatibility: Use chrome API if available, otherwise browser API
-const browserAPI = (
-  typeof chrome !== "undefined" && chrome.storage ? chrome : browser
-) as typeof browser;
+// ============================================================================
+// Types and Interfaces
+// ============================================================================
 
-// Interface to define the structure of Exam objects
 interface Exam {
   title: string;
   shots: ExamShot[];
@@ -31,270 +29,94 @@ interface Settings {
   linkType: "anxious-display" | "exam-article";
 }
 
+type Language = "en" | "it";
+
+interface CalendarEvent extends EventInput {
+  extendedProps?: {
+    articleIndex: number;
+    result?: number;
+    rejectable?: boolean;
+    awaitingResults?: boolean;
+    isDeadline?: boolean;
+  };
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const browserAPI = (
+  typeof chrome !== "undefined" && chrome.storage ? chrome : browser
+) as typeof browser;
+
 const exams: Exam[] = [];
 
-// Translations
 const translations = {
   en: {
     exportButton: "Export exams you registered for as ICS",
     noEnrollments: "No exam enrollments found.",
+    legend: "Legend:",
+    rejectionDeadline: "Rejection deadline",
+    publishedResult: "Published result",
+    awaitingResults: "Awaiting results",
+    enrolled: "Enrolled",
+    notEnrolled: "Not enrolled",
+    noExamsToDisplay: "No exams to display",
   },
   it: {
     exportButton: "Esporta gli esami a cui sei iscritto come ICS",
     noEnrollments: "Nessuna iscrizione all'esame trovata.",
+    legend: "Legenda:",
+    rejectionDeadline: "Scadenza rifiuto",
+    publishedResult: "Esito pubblicato",
+    awaitingResults: "In attesa di esito",
+    enrolled: "Iscritto",
+    notEnrolled: "Non iscritto",
+    noExamsToDisplay: "Nessun esame da visualizzare",
   },
-};
+} as const;
 
-// Detect current language from the page
-function detectLanguage(): "en" | "it" {
-  // Find all buttons that might be the language switcher
+const EVENT_COLORS = {
+  PUBLISHED: "#9C27B0",
+  AWAITING: "#B8860B",
+  ENROLLED: "#4CAF50",
+  NOT_ENROLLED: "#2196F3",
+  DEADLINE: "#D32F2F",
+} as const;
+
+let calendar: Calendar | null = null;
+let renderTimeout: number | null = null;
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+function detectLanguage(): Language {
   const buttons = Array.from(
-    document.querySelectorAll("button.pj-link-button"),
+    document.querySelectorAll<HTMLButtonElement>("button.pj-link-button"),
   );
 
   for (const button of buttons) {
     const text = button.textContent?.trim().toUpperCase();
     if (text === "EN" || text === "IT") {
-      // Button shows the OTHER language (click to switch to it)
-      // So if button says "EN", current language is "IT" and vice versa
       return text === "EN" ? "it" : "en";
     }
   }
 
-  // Fallback: check for Italian text on the page
   const pageText = document.body.textContent || "";
-  if (pageText.includes("Iscrizioni") || pageText.includes("Appelli")) {
-    return "it";
-  }
-
-  return "en";
+  return pageText.includes("Iscrizioni") || pageText.includes("Appelli")
+    ? "it"
+    : "en";
 }
 
-// Get translated text
 function t(key: keyof typeof translations.en): string {
   const lang = detectLanguage();
   return translations[lang][key];
 }
 
-// Function to extract exam data from the page
-function extractExamData(): Exam[] {
-  const activeTabIndex = Array.from(
-    document.querySelectorAll(".p-tabview-nav li"),
-  ).findIndex((tab) => tab.classList.contains("p-highlight"));
-
-  let articles: NodeListOf<Element>;
-
-  articles = document.querySelectorAll("article");
-
-  articles.forEach((card, index) => {
-    const titleQuerySelector =
-      activeTabIndex === 0 ? "section div.pj-mb-1" : "div.mb-3";
-    const dateQuerySelector =
-      activeTabIndex === 0
-        ? "section > div:not(div:nth-child(1))"
-        : activeTabIndex === 2
-          ? "article.pj-item-card-wide section div.pt-1"
-          : "div:not(div:nth-child(1))";
-    const iconsSelector =
-      activeTabIndex === 0
-        ? "section > div:not(div:nth-child(1)) i"
-        : activeTabIndex === 2
-          ? "article.pj-item-card-wide section div.pt-1 i"
-          : "div:not(div:nth-child(1)) i";
-
-    const title = card.querySelector(titleQuerySelector)?.textContent?.trim();
-    const dates = Array.from(card.querySelectorAll(dateQuerySelector))
-      .map((dateElement) => parseDate(dateElement.textContent?.trim()))
-      .filter((date) => date !== null);
-
-    const icons = Array.from(card.querySelectorAll(iconsSelector));
-
-    // Check for "awaiting results" status
-    // In first tab: check for p-chip-text with "In attesa di esito" or "awaiting results"
-    // In third tab (index 2): all exams are awaiting results
-    const chipTexts = Array.from(card.querySelectorAll(".p-chip-text"));
-    const awaitingResultsInTab = activeTabIndex === 2; // Third tab (esiti/results)
-
-    const dateElements = Array.from(card.querySelectorAll(dateQuerySelector));
-
-    // Just grab the first link in the article
-    const mainLink = card.querySelector("a[href]");
-    const articleUrl = mainLink
-      ? (mainLink as HTMLAnchorElement).href
-      : undefined;
-
-    if (title && dates.length) {
-      exams.push({
-        title,
-        articleUrl,
-        articleIndex: index,
-        shots: dates.map((date, i) => {
-          const enrolled = icons[i]
-            ?.getAttribute("class")
-            ?.includes("pmi-line-check-circle")
-            ? true
-            : false;
-
-          // Check if this specific shot is awaiting results
-          let awaitingResults = awaitingResultsInTab;
-          if (!awaitingResults && activeTabIndex === 0 && dateElements[i]) {
-            // In first tab, check the chip text associated with this date
-            const dateElement = dateElements[i] as HTMLElement;
-            const chipText =
-              dateElement
-                .querySelector(".p-chip-text")
-                ?.textContent?.toLowerCase() || "";
-            awaitingResults =
-              chipText.includes("in attesa di esito") ||
-              chipText.includes("awaiting results");
-          }
-
-          // Parse result information
-          let result: number | undefined;
-          let resultStatus: string | undefined;
-          let rejectionDeadline: Date | undefined;
-          let rejectable: boolean | undefined;
-
-          const dateElement = dateElements[i] as HTMLElement;
-
-          // Look for result score - search in parent context since result grid is a sibling
-          // The structure is: date div, then sibling div.ml-4.mt-2 with the grid containing result
-          let parentSection =
-            dateElement.closest("section") || dateElement.parentElement;
-
-          // In tab2, dateElements are nested deeper
-          if (activeTabIndex === 2) {
-            parentSection = dateElement.closest("article.pj-item-card-wide");
-          }
-
-          if (parentSection) {
-            // Find all .pj-big-letters in the parent and try to match with our date
-            // For simplicity, look for the next sibling with ml-4 class after the date element
-            let nextSibling = dateElement.nextElementSibling;
-
-            // In tab2, the result grid is also a sibling
-            if (activeTabIndex === 2) {
-              nextSibling =
-                dateElement.closest("div.pt-1")?.nextElementSibling || null;
-            }
-
-            // In tab0, look for sibling that contains ml-4 class
-            if (activeTabIndex === 0) {
-              // In tab0, dateElement is div.mt-1, we need to find div.pt-1 inside it first
-              const dateInfoDiv = dateElement.querySelector("div.pt-1");
-              if (dateInfoDiv) {
-                // Now look for sibling with ml-4 class
-                let sibling = dateInfoDiv.nextElementSibling;
-                while (sibling && !sibling.classList.contains("ml-4")) {
-                  sibling = sibling.nextElementSibling;
-                }
-                nextSibling = sibling;
-              }
-            } else {
-              // For other tabs, keep original logic
-              while (nextSibling && !nextSibling.classList.contains("ml-4")) {
-                nextSibling = nextSibling.nextElementSibling;
-              }
-            }
-
-            if (nextSibling) {
-              // Look for result score in the grid
-              const resultElement =
-                nextSibling.querySelector(".pj-big-letters");
-              if (resultElement) {
-                const resultText = resultElement.textContent?.trim();
-                if (resultText && !isNaN(parseInt(resultText))) {
-                  result = parseInt(resultText);
-                  console.log(
-                    `Found result ${result} for ${title} in tab${activeTabIndex}`,
-                  );
-                }
-              }
-
-              // Look for "Rejectable" text (first tab)
-              const rejectableText =
-                nextSibling.textContent?.toLowerCase() || "";
-              if (
-                rejectableText.includes("rejectable") ||
-                rejectableText.includes("rifiutabile")
-              ) {
-                rejectable = true;
-              }
-
-              // Look for status - PUBBLICATO/PUBLISHED means it's not awaiting anymore
-              const statusDiv = nextSibling.querySelector(".capital-letter");
-              if (statusDiv) {
-                resultStatus = statusDiv.textContent?.trim();
-                const statusText = resultStatus?.toLowerCase() || "";
-                if (
-                  statusText.includes("pubblicato") ||
-                  statusText.includes("published")
-                ) {
-                  // Result is published, not awaiting
-                  awaitingResults = false;
-                }
-              }
-            }
-          }
-
-          // If we found a result in tab0 and it's rejectable, it's published (not awaiting)
-          if (activeTabIndex === 0 && result !== undefined && rejectable) {
-            awaitingResults = false;
-          }
-
-          // Look for rejection deadline (tab2 or tab0 with results)
-          if (
-            activeTabIndex === 2 ||
-            (activeTabIndex === 0 && result !== undefined)
-          ) {
-            const dateElem = dateElements[i] as HTMLElement;
-            let searchContext =
-              dateElem.closest("section") || dateElem.parentElement;
-
-            if (activeTabIndex === 2) {
-              searchContext = dateElem.closest("article.pj-item-card-wide");
-            }
-
-            const rejectionSection = searchContext?.querySelector(
-              ".col-6.pj-pt-content, .pj-pt-content",
-            );
-            if (rejectionSection) {
-              const deadlineText = rejectionSection.textContent;
-              const deadlineMatch = deadlineText?.match(
-                /(\d{1,2})\s*([A-Z]{3})\s*(\d{4})\s*(\d{2}):(\d{2})/i,
-              );
-              if (deadlineMatch) {
-                const [_, day, month, year, hour, minute] = deadlineMatch;
-                const parsedDate = parseDate(`${day}${month}${year}`);
-                if (parsedDate) {
-                  rejectionDeadline = new Date(parsedDate);
-                  rejectionDeadline.setHours(parseInt(hour), parseInt(minute));
-                }
-              }
-            }
-          }
-
-          return {
-            date,
-            enrolled,
-            awaitingResults,
-            result,
-            resultStatus,
-            rejectionDeadline,
-            rejectable,
-          };
-        }),
-      });
-    }
-  });
-
-  return exams;
-}
-
 function parseDate(dateText: string | undefined): Date | null {
   if (!dateText) return null;
 
-  // Match formats like "12GEN2024" or "1FEB2023"
   const match = dateText.match(/(\d{1,2})([A-Z]{3})(\d{4})/i);
   if (!match) return null;
 
@@ -302,7 +124,6 @@ function parseDate(dateText: string | undefined): Date | null {
   const day = Number(dayStr);
   const year = Number(yearStr);
 
-  // Build month arrays for both Italian and English
   const italianMonths = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i, 1)
       .toLocaleString("it-IT", { month: "short" })
@@ -325,65 +146,468 @@ function parseDate(dateText: string | undefined): Date | null {
   return isNaN(date.getTime()) ? null : date;
 }
 
-let calendar: Calendar | null = null;
-let renderTimeout: number | null = null;
-
-// Debounced version of attemptRenderCalendar to prevent excessive re-renders
-function debouncedRenderCalendar() {
-  if (renderTimeout) {
-    clearTimeout(renderTimeout);
-  }
-  renderTimeout = window.setTimeout(() => {
-    attemptRenderCalendar();
-    renderTimeout = null;
-  }, 150);
+function getActiveTabIndex(): number {
+  return Array.from(document.querySelectorAll(".p-tabview-nav li")).findIndex(
+    (tab) => tab.classList.contains("p-highlight"),
+  );
 }
 
-// Function to generate an ICS file for enrolled exams
-function generateICS() {
-  const enrolledExams = exams.filter((exam) =>
-    exam.shots?.some((shot) => shot.enrolled),
+function getActiveSection(): Element | null {
+  return document.querySelector('.p-tabview-panel:not([aria-hidden="true"])');
+}
+
+function getTodayAtMidnight(): Date {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
+
+// ============================================================================
+// Data Extraction Functions
+// ============================================================================
+
+function getQuerySelectors(activeTabIndex: number) {
+  return {
+    title: activeTabIndex === 0 ? "section div.pj-mb-1" : "div.mb-3",
+    date:
+      activeTabIndex === 0
+        ? "section > div:not(div:nth-child(1))"
+        : activeTabIndex === 2
+          ? "article.pj-item-card-wide section div.pt-1"
+          : "div:not(div:nth-child(1))",
+    icons:
+      activeTabIndex === 0
+        ? "section > div:not(div:nth-child(1)) i"
+        : activeTabIndex === 2
+          ? "article.pj-item-card-wide section div.pt-1 i"
+          : "div:not(div:nth-child(1)) i",
+  };
+}
+
+function findResultSibling(
+  dateElement: HTMLElement,
+  activeTabIndex: number,
+): Element | null {
+  if (activeTabIndex === 2) {
+    return dateElement.closest("div.pt-1")?.nextElementSibling || null;
+  }
+
+  if (activeTabIndex === 0) {
+    const dateInfoDiv = dateElement.querySelector("div.pt-1");
+    if (dateInfoDiv) {
+      let sibling = dateInfoDiv.nextElementSibling;
+      while (sibling && !sibling.classList.contains("ml-4")) {
+        sibling = sibling.nextElementSibling;
+      }
+      return sibling;
+    }
+    return null;
+  }
+
+  let sibling = dateElement.nextElementSibling;
+  while (sibling && !sibling.classList.contains("ml-4")) {
+    sibling = sibling.nextElementSibling;
+  }
+  return sibling;
+}
+
+function parseResultInfo(resultSibling: Element): {
+  result?: number;
+  rejectable?: boolean;
+  resultStatus?: string;
+} {
+  let result: number | undefined;
+  let rejectable: boolean | undefined;
+  let resultStatus: string | undefined;
+
+  const resultElement = resultSibling.querySelector(".pj-big-letters");
+  if (resultElement) {
+    const resultText = resultElement.textContent?.trim();
+    if (resultText && !isNaN(parseInt(resultText))) {
+      result = parseInt(resultText);
+    }
+  }
+
+  const rejectableText = resultSibling.textContent?.toLowerCase() || "";
+  if (
+    rejectableText.includes("rejectable") ||
+    rejectableText.includes("rifiutabile")
+  ) {
+    rejectable = true;
+  }
+
+  const statusDiv = resultSibling.querySelector(".capital-letter");
+  if (statusDiv) {
+    resultStatus = statusDiv.textContent?.trim();
+  }
+
+  return { result, rejectable, resultStatus };
+}
+
+function parseRejectionDeadline(
+  searchContext: Element | null,
+): Date | undefined {
+  if (!searchContext) return undefined;
+
+  const rejectionSection = searchContext.querySelector(
+    ".col-6.pj-pt-content, .pj-pt-content",
   );
+  if (!rejectionSection) return undefined;
 
-  let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\n";
+  const deadlineText = rejectionSection.textContent;
+  const deadlineMatch = deadlineText?.match(
+    /(\d{1,2})\s*([A-Z]{3})\s*(\d{4})\s*(\d{2}):(\d{2})/i,
+  );
+  if (!deadlineMatch) return undefined;
 
-  enrolledExams.forEach((exam) => {
-    exam.shots
-      .filter((shot) => shot.enrolled)
-      .forEach((shot) => {
-        icsContent += `BEGIN:VEVENT\nSUMMARY:${exam.title}\nDTSTART:${
-          shot.date.toISOString().replace(/[-:]/g, "").split(".")[0]
-        }Z\nDTEND:${
-          new Date(shot.date.getTime() + 3600000)
-            .toISOString()
-            .replace(/[-:]/g, "")
-            .split(".")[0]
-        }Z\nEND:VEVENT\n`;
+  const [_, day, month, year, hour, minute] = deadlineMatch;
+  const parsedDate = parseDate(`${day}${month}${year}`);
+  if (!parsedDate) return undefined;
+
+  const deadline = new Date(parsedDate);
+  deadline.setHours(parseInt(hour), parseInt(minute));
+  return deadline;
+}
+
+function parseExamShot(
+  date: Date,
+  index: number,
+  dateElements: Element[],
+  icons: Element[],
+  activeTabIndex: number,
+  awaitingResultsInTab: boolean,
+  title: string,
+): ExamShot {
+  const enrolled =
+    icons[index]?.getAttribute("class")?.includes("pmi-line-check-circle") ??
+    false;
+
+  let awaitingResults = awaitingResultsInTab;
+  const dateElement = dateElements[index] as HTMLElement;
+
+  // Check chip text for awaiting status in tab0
+  if (!awaitingResults && activeTabIndex === 0) {
+    const chipText =
+      dateElement.querySelector(".p-chip-text")?.textContent?.toLowerCase() ||
+      "";
+    awaitingResults =
+      chipText.includes("in attesa di esito") ||
+      chipText.includes("awaiting results");
+  }
+
+  let result: number | undefined;
+  let resultStatus: string | undefined;
+  let rejectable: boolean | undefined;
+  let rejectionDeadline: Date | undefined;
+
+  // Find and parse result information
+  const resultSibling = findResultSibling(dateElement, activeTabIndex);
+  if (resultSibling) {
+    const resultInfo = parseResultInfo(resultSibling);
+    result = resultInfo.result;
+    rejectable = resultInfo.rejectable;
+    resultStatus = resultInfo.resultStatus;
+
+    if (result !== undefined) {
+      console.log(
+        `Found result ${result} for ${title} in tab${activeTabIndex}`,
+      );
+    }
+
+    // Check if result is published
+    const statusText = resultStatus?.toLowerCase() || "";
+    if (statusText.includes("pubblicato") || statusText.includes("published")) {
+      awaitingResults = false;
+    }
+  }
+
+  // Special case: result with rejectable in tab0 means it's published
+  if (activeTabIndex === 0 && result !== undefined && rejectable) {
+    awaitingResults = false;
+  }
+
+  // Parse rejection deadline if applicable
+  if (activeTabIndex === 2 || (activeTabIndex === 0 && result !== undefined)) {
+    let searchContext =
+      dateElement.closest("section") || dateElement.parentElement;
+    if (activeTabIndex === 2) {
+      searchContext = dateElement.closest("article.pj-item-card-wide");
+    }
+    rejectionDeadline = parseRejectionDeadline(searchContext);
+  }
+
+  return {
+    date,
+    enrolled,
+    awaitingResults,
+    result,
+    resultStatus,
+    rejectionDeadline,
+    rejectable,
+  };
+}
+
+function extractExamData(): Exam[] {
+  const activeTabIndex = getActiveTabIndex();
+  const articles = document.querySelectorAll("article");
+  const selectors = getQuerySelectors(activeTabIndex);
+  const awaitingResultsInTab = activeTabIndex === 2;
+
+  articles.forEach((card, index) => {
+    const title = card.querySelector(selectors.title)?.textContent?.trim();
+    const dates = Array.from(card.querySelectorAll(selectors.date))
+      .map((el) => parseDate(el.textContent?.trim()))
+      .filter((date): date is Date => date !== null);
+
+    const icons = Array.from(card.querySelectorAll(selectors.icons));
+    const dateElements = Array.from(card.querySelectorAll(selectors.date));
+    const mainLink = card.querySelector<HTMLAnchorElement>("a[href]");
+
+    if (title && dates.length > 0) {
+      exams.push({
+        title,
+        articleUrl: mainLink?.href,
+        articleIndex: index,
+        shots: dates.map((date, i) =>
+          parseExamShot(
+            date,
+            i,
+            dateElements,
+            icons,
+            activeTabIndex,
+            awaitingResultsInTab,
+            title,
+          ),
+        ),
       });
+    }
   });
 
-  icsContent += "END:VCALENDAR";
-
-  const blob = new Blob([icsContent], { type: "text/calendar" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "registered_exams.ics";
-  link.click();
-
-  URL.revokeObjectURL(url);
+  return exams;
 }
 
-// Add legend below calendar
-function addLegend(activeSection: Element, events: any[]) {
-  let legendElement = activeSection.querySelector("#calendar-legend");
+// ============================================================================
+// Event Creation Functions
+// ============================================================================
+
+function getEventColor(shot: ExamShot): string {
+  if (shot.result !== undefined && !shot.awaitingResults) {
+    return EVENT_COLORS.PUBLISHED;
+  }
+  if (shot.awaitingResults) {
+    return EVENT_COLORS.AWAITING;
+  }
+  if (shot.enrolled) {
+    return EVENT_COLORS.ENROLLED;
+  }
+  return EVENT_COLORS.NOT_ENROLLED;
+}
+
+function createEventUrl(
+  exam: Exam,
+  shot: ExamShot,
+  settings: Settings,
+): string {
+  if (settings.linkType === "exam-article") {
+    return `#article-${exam.articleIndex}`;
+  }
+
+  const url = [
+    {
+      title: exam.title,
+      description: "imported from polimi-exam-calendar",
+      date: shot.date.toISOString(),
+    },
+  ];
+  return (
+    "https://the-anxious-display.vercel.app/?countdowns=" +
+    btoa(JSON.stringify(url))
+  );
+}
+
+function createMainEvent(
+  exam: Exam,
+  shot: ExamShot,
+  settings: Settings,
+): CalendarEvent {
+  const eventUrl = createEventUrl(exam, shot, settings);
+  const color = getEventColor(shot);
+
+  let displayTitle = exam.title;
+  if (shot.result !== undefined) {
+    displayTitle += ` - ${shot.result}`;
+    if (shot.rejectable) {
+      displayTitle += " (Rejectable)";
+    }
+  }
+
+  return {
+    title: displayTitle,
+    start: shot.date.toISOString(),
+    color,
+    allDay: true,
+    url: eventUrl,
+    extendedProps: {
+      articleIndex: exam.articleIndex,
+      result: shot.result,
+      rejectable: shot.rejectable,
+      awaitingResults: shot.awaitingResults,
+    },
+  };
+}
+
+function createDeadlineEvent(
+  exam: Exam,
+  shot: ExamShot,
+  eventUrl: string,
+): CalendarEvent {
+  const endTime = new Date(shot.rejectionDeadline!);
+  endTime.setMinutes(endTime.getMinutes() + 15);
+
+  return {
+    title: exam.title,
+    start: shot.rejectionDeadline!.toISOString(),
+    end: endTime.toISOString(),
+    color: EVENT_COLORS.DEADLINE,
+    allDay: false,
+    url: eventUrl,
+    extendedProps: {
+      articleIndex: exam.articleIndex,
+      isDeadline: true,
+    },
+  };
+}
+
+function createCalendarEvents(settings: Settings): CalendarEvent[] {
+  const now = getTodayAtMidnight();
+
+  return exams.flatMap((exam) =>
+    exam.shots
+      .filter((shot) => {
+        const isPast = shot.date < now;
+        return !isPast || shot.awaitingResults || shot.result !== undefined;
+      })
+      .flatMap((shot) => {
+        const mainEvent = createMainEvent(exam, shot, settings);
+        const events: CalendarEvent[] = [mainEvent];
+
+        if (shot.rejectionDeadline && shot.rejectable) {
+          const eventUrl = createEventUrl(exam, shot, settings);
+          events.push(createDeadlineEvent(exam, shot, eventUrl));
+        }
+
+        return events;
+      }),
+  );
+}
+
+// ============================================================================
+// Calendar UI Functions
+// ============================================================================
+
+function setupCalendarElement(activeSection: Element): HTMLElement {
+  let calendarElement = activeSection.querySelector<HTMLElement>("#calendar");
+
+  if (!calendarElement) {
+    calendarElement = document.createElement("div");
+    calendarElement.id = "calendar";
+    activeSection.appendChild(calendarElement);
+  } else {
+    calendarElement.innerHTML = "";
+    activeSection.appendChild(calendarElement);
+  }
+
+  return calendarElement;
+}
+
+function createCalendarConfig(
+  events: CalendarEvent[],
+  settings: Settings,
+  currentLang: Language,
+): any {
+  const customItLocale =
+    currentLang === "it"
+      ? {
+          code: "it",
+          week: { dow: 1, doy: 4 },
+          buttonText: itLocale.buttonText,
+          weekText: itLocale.weekText,
+          allDayText: itLocale.allDayText,
+          moreLinkText: itLocale.moreLinkText,
+          noEventsText: itLocale.noEventsText,
+        }
+      : undefined;
+
+  const initialDate = exams.length > 0 ? exams[0].shots[0].date : new Date();
+
+  return {
+    plugins: [dayGridPlugin, listPlugin],
+    initialView: "dayGridMonth",
+    initialDate: initialDate,
+    locale: customItLocale || currentLang,
+    events,
+    eventClick: (info: any) => handleEventClick(info, settings),
+    views: {
+      dayGridMonth: {
+        titleFormat: (date: any) => formatMonthTitle(date, currentLang),
+        dayHeaderFormat: { weekday: "long" },
+      },
+      listMonth: {
+        listDayFormat: {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        },
+        listDaySideFormat: false,
+        noEventsContent: t("noExamsToDisplay"),
+      },
+    },
+    headerToolbar: {
+      right: "prev,next today",
+      center: "title",
+      left: "dayGridMonth,listMonth",
+    },
+  };
+}
+
+function formatMonthTitle(date: any, lang: Language): string {
+  const month = date.date.marker.toLocaleDateString(lang, { month: "long" });
+  const year = date.date.marker.getFullYear();
+  const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+  return `${capitalizedMonth} ${year}`;
+}
+
+function handleEventClick(info: any, settings: Settings): void {
+  if (settings.linkType !== "exam-article") return;
+
+  info.jsEvent.preventDefault();
+  const articleIndex = info.event.extendedProps.articleIndex;
+  const articles = document.querySelectorAll("article");
+  const targetArticle = articles[articleIndex];
+
+  if (!targetArticle) return;
+
+  targetArticle.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  const originalBg = window.getComputedStyle(targetArticle).backgroundColor;
+  targetArticle.style.transition = "background-color 0.3s";
+  targetArticle.style.backgroundColor = "rgba(33, 150, 243, 0.1)";
+
+  setTimeout(() => {
+    targetArticle.style.backgroundColor = originalBg;
+  }, 2000);
+}
+
+function addLegend(activeSection: Element, events: CalendarEvent[]): void {
+  let legendElement =
+    activeSection.querySelector<HTMLElement>("#calendar-legend");
 
   if (!legendElement) {
     legendElement = document.createElement("div");
     legendElement.id = "calendar-legend";
-    (legendElement as HTMLElement).style.cssText = `
-      margin: 10px 10px 10px 10px;
+    legendElement.style.cssText = `
+      margin: 10px;
       padding: 10px;
       border: 1px solid var(--bg-secondary-dark, #ccc);
       border-radius: var(--border-radius, 4px);
@@ -397,51 +621,33 @@ function addLegend(activeSection: Element, events: any[]) {
     activeSection.appendChild(legendElement);
   }
 
-  // Sort events by date to get the display order
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
-  );
+  const sortedEvents = [...events].sort((a, b) => {
+    const aTime = new Date(a.start as string).getTime();
+    const bTime = new Date(b.start as string).getTime();
+    return aTime - bTime;
+  });
 
-  // Get unique colors in the order they appear in sorted events
-  const colorMap = new Map<string, string>();
+  const colorLabelMap = new Map<string, string>([
+    [EVENT_COLORS.DEADLINE, t("rejectionDeadline")],
+    [EVENT_COLORS.PUBLISHED, t("publishedResult")],
+    [EVENT_COLORS.AWAITING, t("awaitingResults")],
+    [EVENT_COLORS.ENROLLED, t("enrolled")],
+    [EVENT_COLORS.NOT_ENROLLED, t("notEnrolled")],
+  ]);
 
+  const uniqueColors = new Map<string, string>();
   sortedEvents.forEach((event) => {
-    const color = event.color;
-    if (!colorMap.has(color)) {
-      let label = "";
-      if (color === "#D32F2F") {
-        label =
-          detectLanguage() === "it" ? "Scadenza rifiuto" : "Rejection deadline";
-      } else if (color === "#9C27B0") {
-        label =
-          detectLanguage() === "it" ? "Esito pubblicato" : "Published result";
-      } else if (color === "#B8860B") {
-        label =
-          detectLanguage() === "it" ? "In attesa di esito" : "Awaiting results";
-      } else if (color === "#4CAF50") {
-        label = detectLanguage() === "it" ? "Iscritto" : "Enrolled";
-      } else if (color === "#2196F3") {
-        label = detectLanguage() === "it" ? "Non iscritto" : "Not enrolled";
-      }
-      colorMap.set(color, label);
+    const color = event.color as string;
+    if (!uniqueColors.has(color) && colorLabelMap.has(color)) {
+      uniqueColors.set(color, colorLabelMap.get(color)!);
     }
   });
 
-  // Build legend HTML
-  let legendHTML =
-    '<strong style="margin-right: 10px;">' +
-    (detectLanguage() === "it" ? "Legenda:" : "Legend:") +
-    "</strong>";
-
-  colorMap.forEach((label, color) => {
+  let legendHTML = `<strong style="margin-right: 10px;">${t("legend")}</strong>`;
+  uniqueColors.forEach((label, color) => {
     legendHTML += `
       <div style="display: flex; align-items: center; gap: 5px;">
-        <div style="
-          width: 16px;
-          height: 16px;
-          background-color: ${color};
-          border-radius: 2px;
-        "></div>
+        <div style="width: 16px; height: 16px; background-color: ${color}; border-radius: 2px;"></div>
         <span>${label}</span>
       </div>
     `;
@@ -450,42 +656,68 @@ function addLegend(activeSection: Element, events: any[]) {
   legendElement.innerHTML = legendHTML;
 }
 
-// Add export button to the calendar
-function addExportButton() {
-  const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])',
+// ============================================================================
+// Export and Settings Functions
+// ============================================================================
+
+function generateICS(): void {
+  const enrolledExams = exams.filter((exam) =>
+    exam.shots.some((shot) => shot.enrolled),
   );
 
-  if (activeSection) {
-    let exportButton = activeSection.querySelector("#export-ics-button");
-    if (!exportButton) {
-      exportButton = document.createElement("button");
-      exportButton.id = "export-ics-button";
-      exportButton.textContent = t("exportButton");
+  let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\n";
 
-      const buttonElement = exportButton as HTMLElement;
-      buttonElement.classList.add("p-button", "p-component");
-      buttonElement.style.margin = "10px";
+  enrolledExams.forEach((exam) => {
+    exam.shots
+      .filter((shot) => shot.enrolled)
+      .forEach((shot) => {
+        const start = shot.date
+          .toISOString()
+          .replace(/[-:]/g, "")
+          .split(".")[0];
+        const end = new Date(shot.date.getTime() + 3600000)
+          .toISOString()
+          .replace(/[-:]/g, "")
+          .split(".")[0];
+        icsContent += `BEGIN:VEVENT\nSUMMARY:${exam.title}\nDTSTART:${start}Z\nDTEND:${end}Z\nEND:VEVENT\n`;
+      });
+  });
 
-      exportButton.addEventListener("click", generateICS);
-      activeSection.appendChild(exportButton);
-    } else {
-      // Update text in case language changed
-      exportButton.textContent = t("exportButton");
-    }
-  }
+  icsContent += "END:VCALENDAR";
+
+  const blob = new Blob([icsContent], { type: "text/calendar" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "registered_exams.ics";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
-// Load settings from storage
+function addExportButton(): void {
+  const activeSection = getActiveSection();
+  if (!activeSection) return;
+
+  let exportButton =
+    activeSection.querySelector<HTMLButtonElement>("#export-ics-button");
+
+  if (!exportButton) {
+    exportButton = document.createElement("button");
+    exportButton.id = "export-ics-button";
+    exportButton.classList.add("p-button", "p-component");
+    exportButton.style.margin = "10px";
+    exportButton.addEventListener("click", generateICS);
+    activeSection.appendChild(exportButton);
+  }
+
+  exportButton.textContent = t("exportButton");
+}
+
 async function loadSettings(): Promise<Settings> {
   try {
     const result = await browserAPI.storage.sync.get("linkType");
-
-    // Return exam-article as default if not set, but don't save it
-    // This allows the calendar to work while keeping the notification dot
     const linkType =
       (result.linkType as "anxious-display" | "exam-article") || "exam-article";
-
     return { linkType };
   } catch (error) {
     console.error("Error loading settings, using default:", error);
@@ -493,250 +725,62 @@ async function loadSettings(): Promise<Settings> {
   }
 }
 
-// Modify the script to continuously attempt rendering until the active tab is found
-async function attemptRenderCalendar() {
+// ============================================================================
+// Main Render Function
+// ============================================================================
+
+async function attemptRenderCalendar(): Promise<void> {
   exams.length = 0;
   extractExamData();
-  const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])',
-  );
 
-  exams.some((exam) => exam.shots.some((shot) => shot.enrolled))
-    ? addExportButton()
-    : null;
+  const activeSection = getActiveSection();
 
-  if (exams.length > 0 && activeSection) {
-    let calendarElement = activeSection.querySelector("#calendar");
-    if (!calendarElement) {
-      calendarElement = document.createElement("div");
-      calendarElement.id = "calendar";
-      // Append to the end to ensure it's always at the bottom
-      activeSection.appendChild(calendarElement);
-    } else {
-      // Move calendar to the end if it exists
-      calendarElement.innerHTML = "";
-      activeSection.appendChild(calendarElement);
-    }
+  // Add export button if there are enrolled exams
+  if (exams.some((exam) => exam.shots.some((shot) => shot.enrolled))) {
+    addExportButton();
+  }
 
-    // Load settings to determine URL type
-    const settings = await loadSettings();
-    console.log("Current link type setting:", settings.linkType);
-
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // Set to start of today
-
-    const events = exams.flatMap((exam) =>
-      exam.shots
-        .filter((shot) => {
-          // Include future exams, or past exams that have results or are awaiting results
-          const isPast = shot.date < now;
-          return !isPast || shot.awaitingResults || shot.result !== undefined;
-        })
-        .flatMap((shot, i) => {
-          let eventUrl: string | undefined;
-
-          if (settings.linkType === "exam-article") {
-            // Use a fake URL with article index as a marker
-            eventUrl = `#article-${exam.articleIndex}`;
-            console.log("Using article scroll to index:", exam.articleIndex);
-          } else {
-            // Default to anxious display
-            let url = Array.from([
-              {
-                title: exam.title,
-                description: "imported from polimi-exam-calendar",
-                date: shot.date.toISOString(),
-              },
-            ]);
-            const urlParam = btoa(JSON.stringify(url));
-            eventUrl =
-              "https://the-anxious-display.vercel.app/?countdowns=" + urlParam;
-            console.log("Using anxious display URL");
-          }
-
-          // Determine color:
-          // - Purple for published results (has result but not awaiting)
-          // - Dark yellow for awaiting results
-          // - Green for enrolled (future exams)
-          // - Blue for others
-          let color = "#2196F3"; // Default blue
-          if (shot.result !== undefined && !shot.awaitingResults) {
-            color = "#9C27B0"; // Purple for published results
-          } else if (shot.awaitingResults) {
-            color = "#B8860B"; // Dark goldenrod (awaiting results)
-          } else if (shot.enrolled) {
-            color = "#4CAF50"; // Green for enrolled
-          }
-
-          // Add result to title if available
-          let displayTitle = exam.title;
-          if (shot.result !== undefined) {
-            displayTitle += ` - ${shot.result}`;
-            if (shot.rejectable) {
-              displayTitle += " (Rejectable)";
-            }
-          }
-
-          const mainEvent = {
-            title: displayTitle,
-            start: shot.date.toISOString(),
-            color: color,
-            allDay: true,
-            url: eventUrl,
-            extendedProps: {
-              articleIndex: exam.articleIndex,
-              result: shot.result,
-              rejectable: shot.rejectable,
-              awaitingResults: shot.awaitingResults,
-            } as any,
-          };
-
-          // Add rejection deadline event if available (from tab2)
-          const eventsToReturn = [mainEvent];
-          if (shot.rejectionDeadline && shot.rejectable) {
-            const lang = detectLanguage();
-            const deadlineTitle = `${exam.title}`;
-
-            // Create end time 15 minutes after start
-            const endTime = new Date(shot.rejectionDeadline);
-            endTime.setMinutes(endTime.getMinutes() + 15);
-
-            eventsToReturn.push({
-              title: deadlineTitle,
-              start: shot.rejectionDeadline.toISOString(),
-              end: endTime.toISOString(),
-              color: "#D32F2F", // Red for deadline
-              allDay: false,
-              url: eventUrl,
-              extendedProps: {
-                articleIndex: exam.articleIndex,
-                isDeadline: true,
-              },
-            } as any);
-          }
-
-          return eventsToReturn;
-        }),
-    );
-
-    if (calendar) {
-      calendar.destroy(); // Destroy the previous calendar instance
-    }
-
-    const currentLang = detectLanguage();
-
-    // Create custom Italian locale with capitalized months
-    const customItLocale =
-      currentLang === "it"
-        ? {
-            code: "it",
-            week: {
-              dow: 1,
-              doy: 4,
-            },
-            buttonText: itLocale.buttonText,
-            weekText: itLocale.weekText,
-            allDayText: itLocale.allDayText,
-            moreLinkText: itLocale.moreLinkText,
-            noEventsText: itLocale.noEventsText,
-          }
-        : undefined;
-
-    calendar = new Calendar(calendarElement as HTMLElement, {
-      plugins: [dayGridPlugin, listPlugin],
-      initialView: "dayGridMonth",
-      initialDate: exams.length > 0 ? exams[0].shots[0].date : new Date(),
-      locale: customItLocale || currentLang,
-      events,
-
-      eventClick: function (info) {
-        const currentSettings = settings; // Capture settings in closure
-
-        if (currentSettings.linkType === "exam-article") {
-          // Prevent default navigation
-          info.jsEvent.preventDefault();
-
-          // Get the article index from the event
-          const articleIndex = info.event.extendedProps.articleIndex;
-
-          // Find and scroll to the article
-          const articles = document.querySelectorAll("article");
-          const targetArticle = articles[articleIndex];
-
-          if (targetArticle) {
-            // Scroll to the article
-            targetArticle.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-
-            // Add a temporary highlight effect
-            targetArticle.style.transition = "background-color 0.3s";
-            const originalBg =
-              window.getComputedStyle(targetArticle).backgroundColor;
-            targetArticle.style.backgroundColor = "rgba(33, 150, 243, 0.1)";
-
-            setTimeout(() => {
-              targetArticle.style.backgroundColor = originalBg;
-            }, 2000);
-          }
-        }
-        // For anxious-display, let the default URL navigation happen
-      },
-
-      views: {
-        dayGridMonth: {
-          titleFormat: (date) => {
-            const month = date.date.marker.toLocaleDateString(currentLang, {
-              month: "long",
-            });
-            const year = date.date.marker.getFullYear();
-            // Capitalize first letter for Italian
-            const capitalizedMonth =
-              month.charAt(0).toUpperCase() + month.slice(1);
-            return `${capitalizedMonth} ${year}`;
-          },
-          dayHeaderFormat: { weekday: "long" },
-        },
-        listMonth: {
-          listDayFormat: {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          },
-          listDaySideFormat: false,
-          noEventsContent:
-            currentLang === "it"
-              ? "Nessun esame da visualizzare"
-              : "No exams to display",
-        },
-      },
-
-      headerToolbar: {
-        right: "prev,next today",
-        center: "title",
-        left: "dayGridMonth,listMonth",
-      },
-    });
-    calendar.render();
-
-    // Add legend below calendar
-    addLegend(activeSection, events);
-
-    setupClickListener();
-  } else {
+  if (exams.length === 0 || !activeSection) {
     console.log("Active section not found. Retrying in 1 second...");
     setTimeout(attemptRenderCalendar, 1000);
+    return;
   }
+
+  const calendarElement = setupCalendarElement(activeSection);
+  const settings = await loadSettings();
+  const events = createCalendarEvents(settings);
+  const currentLang = detectLanguage();
+
+  if (calendar) {
+    calendar.destroy();
+  }
+
+  const config = createCalendarConfig(events, settings, currentLang);
+  calendar = new Calendar(calendarElement, config);
+  calendar.render();
+
+  addLegend(activeSection, events);
+  setupClickListener();
 }
 
-// Function to set up tab click listener
-function setupClickListener() {
+function debouncedRenderCalendar(): void {
+  if (renderTimeout) {
+    clearTimeout(renderTimeout);
+  }
+  renderTimeout = window.setTimeout(() => {
+    attemptRenderCalendar();
+    renderTimeout = null;
+  }, 150);
+}
+
+// ============================================================================
+// Event Listeners and Observers
+// ============================================================================
+
+function setupClickListener(): void {
   const tabs = document.querySelectorAll(".p-tabview-nav li");
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      // Delay to allow tab content to load
       setTimeout(() => {
         debouncedRenderCalendar();
         console.log("Tab clicked, re-rendering calendar.");
@@ -745,84 +789,65 @@ function setupClickListener() {
   });
 }
 
-// Set up MutationObserver to detect when active tab changes
-function observeTabChanges() {
+function observeTabChanges(): void {
   const tabPanelContainer = document.querySelector(".p-tabview-panels");
+  if (!tabPanelContainer) return;
 
-  if (tabPanelContainer) {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "aria-hidden"
-        ) {
-          const target = mutation.target as HTMLElement;
-          if (target.getAttribute("aria-hidden") === "false") {
-            console.log("Active tab changed, re-rendering calendar.");
-            debouncedRenderCalendar();
-          }
-        }
-      });
-    });
-
-    const panels = tabPanelContainer.querySelectorAll(".p-tabview-panel");
-    panels.forEach((panel) => {
-      observer.observe(panel, { attributes: true });
-    });
-  }
-}
-
-// Observe language changes and article additions
-function observeLanguageChanges() {
-  const activeSection = document.querySelector(
-    '.p-tabview-panel:not([aria-hidden="true"])',
-  );
-
-  if (activeSection) {
-    const observer = new MutationObserver((mutations) => {
-      // Check if articles were added/removed (language change causes content reload)
-      let articlesChanged = false;
-
-      for (const mutation of mutations) {
-        if (mutation.type === "childList") {
-          // Check if article elements were added or removed
-          const addedArticles = Array.from(mutation.addedNodes).some(
-            (node) =>
-              node.nodeName === "ARTICLE" ||
-              (node as Element).querySelector?.("article"),
-          );
-          const removedArticles = Array.from(mutation.removedNodes).some(
-            (node) =>
-              node.nodeName === "ARTICLE" ||
-              (node as Element).querySelector?.("article"),
-          );
-
-          if (addedArticles || removedArticles) {
-            articlesChanged = true;
-            break;
-          }
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (
+        mutation.type === "attributes" &&
+        mutation.attributeName === "aria-hidden"
+      ) {
+        const target = mutation.target as HTMLElement;
+        if (target.getAttribute("aria-hidden") === "false") {
+          console.log("Active tab changed, re-rendering calendar.");
+          debouncedRenderCalendar();
         }
       }
+    });
+  });
 
-      if (articlesChanged) {
-        console.log(
-          "Articles changed (language switch detected), re-rendering calendar.",
+  const panels = tabPanelContainer.querySelectorAll(".p-tabview-panel");
+  panels.forEach((panel) => {
+    observer.observe(panel, { attributes: true });
+  });
+}
+
+function observeLanguageChanges(): void {
+  const activeSection = getActiveSection();
+  if (!activeSection) return;
+
+  const observer = new MutationObserver((mutations) => {
+    const articlesChanged = mutations.some((mutation) => {
+      if (mutation.type !== "childList") return false;
+
+      const hasArticles = (nodes: NodeList) =>
+        Array.from(nodes).some(
+          (node) =>
+            node.nodeName === "ARTICLE" ||
+            (node as Element).querySelector?.("article"),
         );
-        debouncedRenderCalendar();
-      }
+
+      return (
+        hasArticles(mutation.addedNodes) || hasArticles(mutation.removedNodes)
+      );
     });
 
-    observer.observe(activeSection, {
-      childList: true,
-      subtree: true,
-    });
-  }
+    if (articlesChanged) {
+      console.log(
+        "Articles changed (language switch detected), re-rendering calendar.",
+      );
+      debouncedRenderCalendar();
+    }
+  });
+
+  observer.observe(activeSection, { childList: true, subtree: true });
 }
 
-// Observe URL/navigation changes for SPA navigation
-function observeNavigation() {
-  // Watch for URL changes (back/forward navigation)
+function observeNavigation(): void {
   let lastUrl = location.href;
+
   new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
@@ -832,13 +857,11 @@ function observeNavigation() {
     }
   }).observe(document, { subtree: true, childList: true });
 
-  // Also listen for popstate events (browser back/forward)
   window.addEventListener("popstate", () => {
     console.log("Navigation detected (popstate), re-rendering calendar.");
     debouncedRenderCalendar();
   });
 
-  // Listen for pushstate/replacestate
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
 
@@ -855,7 +878,10 @@ function observeNavigation() {
   };
 }
 
-// Listen for storage changes to reload calendar when settings change
+// ============================================================================
+// Initialization
+// ============================================================================
+
 browserAPI.storage.onChanged.addListener(
   (changes: Record<string, any>, areaName: string) => {
     if (areaName === "sync" && changes.linkType) {
