@@ -1,4 +1,53 @@
-#calendar{
+#calendar {
     height: 600px;
     margin: 20px;
+}
+
+.legend-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+}
+
+.legend-filter-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    min-height: 16px;
+    max-height: 16px;
+    margin: 0;
+    padding: 0;
+    border: 2px solid var(--checkbox-color, #999);
+    border-radius: 3px;
+    background-color: var(--checkbox-color, #999);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 0.15s, border-color 0.15s;
+    box-sizing: border-box;
+}
+
+.legend-filter-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.legend-filter-checkbox:not(:checked) {
+    background-color: transparent;
+}
+
+.legend-filter-checkbox:hover {
+    opacity: 0.8;
 }

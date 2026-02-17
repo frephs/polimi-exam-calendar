@@ -14,6 +14,8 @@ A browser extension that adds a calendar view for exams to the Polimi exam page.
 ## Demo 
 <img src="src/demo.gif" style="border-radius: 20px; width: 100%;">
 
+### Event filtering
+<img src="src/demo-legend.gif" alt="Filter Demo" style="border-radius: 20px; width: 100%;">
 
 ### Popup action:
 <img src="src/popup-demo.png" alt="Popup Demo" width="400">

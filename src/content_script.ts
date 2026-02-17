@@ -86,6 +86,7 @@ const EVENT_COLORS = {
 
 let calendar: Calendar | null = null;
 let renderTimeout: number | null = null;
+const hiddenColors = new Set<string>();
 
 // ============================================================================
 // Utility Functions
@@ -599,6 +600,36 @@ function handleEventClick(info: any, settings: Settings): void {
   }, 2000);
 }
 
+function applyColorFilters(navigate = false): void {
+  if (!calendar) return;
+
+  let firstVisibleDate: Date | null = null;
+
+  calendar.getEvents().forEach((event) => {
+    const color = event.backgroundColor;
+    const hidden = hiddenColors.has(color);
+    event.setProp("display", hidden ? "none" : "auto");
+
+    if (!hidden && event.start) {
+      const d =
+        event.start instanceof Date
+          ? event.start
+          : new Date(event.start as string);
+      if (!firstVisibleDate || d < firstVisibleDate) {
+        firstVisibleDate = d;
+      }
+    }
+  });
+
+  if (navigate) {
+    if (firstVisibleDate) {
+      calendar.gotoDate(firstVisibleDate);
+    } else {
+      calendar.today();
+    }
+  }
+}
+
 function addLegend(activeSection: Element, events: CalendarEvent[]): void {
   let legendElement =
     activeSection.querySelector<HTMLElement>("#calendar-legend");
@@ -643,17 +674,42 @@ function addLegend(activeSection: Element, events: CalendarEvent[]): void {
     }
   });
 
-  let legendHTML = `<strong style="margin-right: 10px;">${t("legend")}</strong>`;
+  legendElement.innerHTML = "";
+
+  const legendLabel = document.createElement("strong");
+  legendLabel.style.marginRight = "10px";
+  legendLabel.textContent = t("legend");
+  legendElement.appendChild(legendLabel);
+
   uniqueColors.forEach((label, color) => {
-    legendHTML += `
-      <div style="display: flex; align-items: center; gap: 5px;">
-        <div style="width: 16px; height: 16px; background-color: ${color}; border-radius: 2px;"></div>
-        <span>${label}</span>
-      </div>
-    `;
+    const wrapper = document.createElement("label");
+    wrapper.className = "legend-filter-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = !hiddenColors.has(color);
+    checkbox.className = "legend-filter-checkbox";
+    checkbox.style.setProperty("--checkbox-color", color);
+
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        hiddenColors.delete(color);
+      } else {
+        hiddenColors.add(color);
+      }
+      applyColorFilters(true);
+    });
+
+    const span = document.createElement("span");
+    span.textContent = label;
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(span);
+    legendElement!.appendChild(wrapper);
   });
 
-  legendElement.innerHTML = legendHTML;
+  // Apply any existing filters to the new calendar instance
+  applyColorFilters();
 }
 
 // ============================================================================
