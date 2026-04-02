@@ -580,6 +580,14 @@ function formatMonthTitle(date: any, lang: Language): string {
 }
 
 function handleEventClick(info: any, settings: Settings): void {
+  if (settings.linkType === "anxious-display") {
+    info.jsEvent.preventDefault();
+    if (info.event.url) {
+      window.open(info.event.url, "_blank", "noopener,noreferrer");
+    }
+    return;
+  }
+
   if (settings.linkType !== "exam-article") return;
 
   info.jsEvent.preventDefault();
