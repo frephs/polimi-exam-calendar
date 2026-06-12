@@ -1,15 +1,265 @@
 #calendar {
-    height: 600px;
-    margin: 20px;
+    height: 620px;
+    margin: 20px 10px;
+    padding: 16px;
+    background-color: var(--white-white-special, #ffffff);
+    font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+/* Header toolbar styling */
+.fc .fc-toolbar {
+    margin-bottom: 20px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: var(--fontSizeH3, 18px) !important;
+    font-weight: 700 !important;
+    color: var(--text-dark, #102c53) !important;
+}
+
+/* Button styling */
+.fc .fc-button-primary {
+    background-color: var(--polimiBaseColor, #102c53) !important;
+    border-color: var(--polimiBaseColor, #102c53) !important;
+    color: var(--text-white, #ffffff) !important;
+    font-weight: 600 !important;
+    border-radius: var(--border-radius, 8px) !important;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 13px !important;
+    padding: 6px 14px !important;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: var(--polimiAccent1Dark, #1c34cb) !important;
+    border-color: var(--polimiAccent1Dark, #1c34cb) !important;
+}
+
+.fc .fc-button-primary:disabled {
+    background-color: var(--polimiNeutralGrayDisabled, #5c6f82) !important;
+    border-color: var(--polimiNeutralGrayDisabled, #5c6f82) !important;
+    opacity: 0.6;
+}
+
+.fc .fc-button-active {
+    background-color: var(--polimiAccent1Dark, #1c34cb) !important;
+    border-color: var(--polimiAccent1Dark, #1c34cb) !important;
+}
+
+/* Button group spacing overrides */
+.fc .fc-button-group {
+    gap: 8px;
+}
+
+.fc .fc-button-group > .fc-button {
+    border-radius: var(--border-radius, 8px) !important;
+    margin-left: 0 !important;
+}
+
+/* Calendar grid table rounded corners */
+.fc .fc-view-harness {
+    border-radius: var(--border-radius, 8px) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--polimi20, #e3e8eb) !important;
+}
+
+.fc .fc-scrollgrid {
+    border-radius: var(--border-radius, 8px) !important;
+    overflow: hidden !important;
+    border: none !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+/* Remove outer borders on the edges of the grid */
+.fc td:last-child, 
+.fc th:last-child {
+    border-right: none !important;
+}
+
+.fc tbody tr:last-child td,
+.fc .fc-scrollgrid-section:last-child td {
+    border-bottom: none !important;
+}
+
+/* Day header styling */
+.fc .fc-col-header-cell {
+    background-color: var(--bg-primary-special, #e7eef3) !important;
+    padding: 8px 0 !important;
+    border-color: var(--polimi20, #e3e8eb) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+    color: var(--text-dark, #102c53) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+}
+
+/* Day grid cell styling */
+.fc .fc-daygrid-day {
+    border-color: var(--polimi20, #e3e8eb) !important;
+}
+
+.fc .fc-daygrid-day-number {
+    color: var(--text-dark, #102c53) !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    text-decoration: none !important;
+    padding: 6px !important;
+}
+
+/* Today cell highlights */
+.fc .fc-day-today {
+    background-color: rgba(103, 179, 255, 0.08) !important;
+}
+
+/* Block (All-day) event styling */
+.fc .fc-daygrid-block-event {
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    margin: 2px 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fc .fc-daygrid-block-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.fc-event-title-container {
+    padding-left: 2px;
+}
+
+.fc-event-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+/* Timed event styling: convert dot events to beautiful pills with left accent border */
+.fc .fc-daygrid-dot-event {
+    background-color: var(--bg-primary-special, #e7eef3) !important;
+    border-left: 4px solid var(--fc-event-border-color, #102c53) !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    margin: 2px 4px !important;
+    color: var(--text-dark, #102c53) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.fc .fc-daygrid-dot-event:hover {
+    transform: translateY(-1px);
+    background-color: var(--bg-secondary-light, #c3cbd4) !important;
+}
+
+.fc .fc-daygrid-dot-event .fc-event-title {
+    color: var(--text-dark, #102c53) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+}
+
+.fc .fc-daygrid-dot-event .fc-event-time {
+    color: var(--polimiGreyBlue, #546475) !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    margin-right: 4px;
+}
+
+.fc-event-room {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: var(--text-dark, #102c53) !important;
+    background-color: var(--white-white-special, #ffffff) !important;
+    border: 1px solid var(--polimi20, #e3e8eb) !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+    white-space: nowrap !important;
+    text-transform: uppercase !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
+}
+
+/* Hide the default tiny colored dot inside timed events since we use a left border instead */
+.fc .fc-daygrid-event-dot {
+    display: none !important;
+}
+
+/* List view styling */
+.fc-list {
+    border-color: var(--polimi20, #e3e8eb) !important;
+    border-radius: var(--border-radius, 8px) !important;
+    overflow: hidden;
+}
+
+.fc .fc-list-day {
+    background-color: var(--bg-primary-special, #e7eef3) !important;
+}
+
+.fc .fc-list-day-text, 
+.fc .fc-list-day-side-text {
+    color: var(--text-dark, #102c53) !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+}
+
+.fc .fc-list-event {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.fc .fc-list-event:hover td {
+    background-color: var(--bg-primary-special, #e7eef3) !important;
+}
+
+.fc .fc-list-event-title {
+    font-weight: 600 !important;
+    color: var(--text-dark, #102c53) !important;
+}
+
+#calendar-legend {
+    margin: 20px 10px !important;
+    padding: 14px !important;
+    background-color: var(--white-white-special, #ffffff) !important;
+    border: 1px solid var(--polimi20, #e3e8eb) !important;
+    border-radius: var(--border-radius, 8px) !important;
+    box-shadow: 0 2px 8px rgba(16, 44, 83, 0.03) !important;
+    display: flex !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+#calendar-legend strong {
+    color: var(--text-dark, #102c53) !important;
+    font-size: 13px !important;
 }
 
 .legend-filter-item {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
     cursor: pointer;
     user-select: none;
-    padding: 4px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s;
+    font-size: 13px;
+    color: var(--polimiGreyBlue, #546475);
+    font-weight: 500;
+}
+
+.legend-filter-item:hover {
+    background-color: var(--bg-primary-special, #e7eef3);
+    color: var(--text-dark, #102c53);
 }
 
 .legend-filter-checkbox {
@@ -23,7 +273,7 @@
     margin: 0;
     padding: 0;
     border: 2px solid var(--checkbox-color, #999);
-    border-radius: 3px;
+    border-radius: 4px;
     background-color: var(--checkbox-color, #999);
     cursor: pointer;
     position: relative;
@@ -35,10 +285,10 @@
 .legend-filter-checkbox:checked::after {
     content: '';
     position: absolute;
-    left: 3px;
-    top: 0px;
-    width: 5px;
-    height: 9px;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
     border: solid white;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
