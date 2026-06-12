@@ -6,107 +6,192 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polimi Exam Calendar Settings</title>
     <style>
+        :root {
+            --font-family: Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --text-dark: #102c53;
+            --polimiBaseColor: #102c53;
+            --polimiAccent1Dark: #1c34cb;
+            --polimiNeutralGray100: #e7eef3;
+            --alert-success: #008055;
+            --polimiGreyBlue: #546475;
+            --border-radius: 8px;
+            --fontSizeP2: 14px;
+            --fontSizeH3: 18px;
+            --fontSizeSmall: 12px;
+            --fontSizePreTitle: 14px;
+            --polimi20: #c3cbd4;
+            --polimi40: #93a4b4;
+            --bg-primary-special: #e7eef3;
+            --white-white-special: #ffffff;
+            --text-white: #ffffff;
+        }
+
         body {
-            width: 300px;
-            padding: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            font-size: 14px;
+            width: 320px;
+            padding: 16px;
+            font-family: var(--font-family);
+            font-size: var(--fontSizeP2);
+            color: var(--text-dark);
+            background-color: var(--white-white-special);
+            margin: 0;
         }
 
         h2 {
             margin-top: 0;
-            font-size: 16px;
-            color: #333;
+            margin-bottom: 16px;
+            font-size: var(--fontSizeH3);
+            color: var(--text-dark);
+            font-weight: 700;
         }
 
         .setting-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
         }
 
         .radio-option {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
-            padding: 8px;
-            border-radius: 4px;
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid var(--polimi20);
+            border-radius: var(--border-radius);
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease-in-out;
+            background-color: var(--white-white-special);
         }
 
         .radio-option:hover {
-            background-color: #f5f5f5;
+            background-color: var(--bg-primary-special);
+            border-color: var(--polimi40);
         }
 
         .radio-option input[type="radio"] {
-            margin-right: 8px;
+            margin: 0 12px 0 0;
             cursor: pointer;
+            accent-color: var(--polimiBaseColor);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .radio-option-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .radio-option-label {
             cursor: pointer;
-            flex: 1;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
         }
 
         .radio-option-description {
-            font-size: 12px;
-            color: #777;
-            margin-top: 2px;
-            margin-left: 24px;
+            font-size: var(--fontSizeSmall);
+            color: var(--polimiGreyBlue);
+            line-height: 1.4;
+            margin: 0;
         }
 
         .save-status {
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 4px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius);
             text-align: center;
-            font-size: 12px;
+            font-size: var(--fontSizeSmall);
             display: none;
+            font-weight: 500;
         }
 
         .save-status.success {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: var(--polimiNeutralGray100);
+            color: var(--alert-success);
+            border: 1px solid var(--alert-success);
             display: block;
+        }
+
+        .redirect-message {
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .redirect-message p {
+            color: var(--polimiGreyBlue);
+            margin-top: 0;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .redirect-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--polimiBaseColor);
+            color: var(--text-white);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: var(--fontSizePreTitle);
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            font-family: var(--font-family);
+        }
+
+        .redirect-button:hover {
+            background-color: var(--polimiAccent1Dark);
         }
     </style>
 </head>
 
 <body>
-    <h2>Calendar Link Settings</h2>
+    <h2>Polimi Exam Calendar Settings</h2>
 
-    <div class="setting-group">
-        <label>When clicking on an exam in the calendar:</label>
-
-        <div class="radio-option">
-            <input type="radio" id="exam-article" name="link-type" value="exam-article" checked>
-            <label for="exam-article" class="radio-option-label">
-                Scroll to exam
-            </label>
-        </div>
-        <div class="radio-option-description">
-            Scroll to the exam section on this page.
-        </div>
-
-        <div class="radio-option">
-            <input type="radio" id="anxious-display" name="link-type" value="anxious-display">
-            <label for="anxious-display" class="radio-option-label">
-                Open Anxious Display
-            </label>
-        </div>
-        <div class="radio-option-description">
-            Show a countdown view of your exams
+    <div id="redirect-container" style="display: none;">
+        <div class="redirect-message">
+            <p>You're not on the exam enrollment page.</p>
+            <button id="open-exam-page" class="redirect-button">Open Exam Enrollment Page</button>
         </div>
     </div>
 
-    <div class="save-status" id="save-status">
-        Settings saved!
+    <div id="settings-container">
+        <div class="setting-group">
+            <label>When clicking on an exam in the calendar:</label>
+
+            <label class="radio-option" for="exam-article">
+                <input type="radio" id="exam-article" name="link-type" value="exam-article" checked>
+                <div class="radio-option-content">
+                    <span class="radio-option-label">
+                        Scroll to exam
+                    </span>
+                    <div class="radio-option-description">
+                        Scroll to the exam section on this page.
+                    </div>
+                </div>
+            </label>
+
+            <label class="radio-option" for="anxious-display">
+                <input type="radio" id="anxious-display" name="link-type" value="anxious-display">
+                <div class="radio-option-content">
+                    <span class="radio-option-label">
+                        Open Anxious Display
+                    </span>
+                    <div class="radio-option-description">
+                        Show a countdown view of your exams
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <div class="save-status" id="save-status">
+            Settings saved!
+        </div>
     </div>
 
     <script src="popup.js"></script>

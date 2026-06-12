@@ -28,7 +28,8 @@
     "default_title": "Polimi Exam Calendar Settings"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "browser_specific_settings": {
     "gecko": {

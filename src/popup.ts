@@ -26,8 +26,46 @@ async function saveSettings(settings: Settings): Promise<void> {
   await browserAPI.storage.sync.set(settings);
 }
 
+const EXAM_PAGE_PATTERN = /onlineservices\.polimi\.it\/iae\/app\//;
+const EXAM_PAGE_URL = "https://onlineservices.polimi.it/iae/app/";
+
+// Check if the current tab is on the exam enrollment page
+async function isOnExamPage(): Promise<boolean> {
+  try {
+    const tabs = await browserAPI.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    const url = tabs[0]?.url || "";
+    return EXAM_PAGE_PATTERN.test(url);
+  } catch {
+    return false;
+  }
+}
+
 // Initialize popup
 document.addEventListener("DOMContentLoaded", async () => {
+  const onExamPage = await isOnExamPage();
+
+  const settingsContainer = document.getElementById("settings-container");
+  const redirectContainer = document.getElementById("redirect-container");
+
+  if (!onExamPage) {
+    // Hide settings, show redirect
+    if (settingsContainer) settingsContainer.style.display = "none";
+    if (redirectContainer) redirectContainer.style.display = "block";
+
+    const redirectButton = document.getElementById("open-exam-page");
+    redirectButton?.addEventListener("click", () => {
+      browserAPI.tabs.create({ url: EXAM_PAGE_URL });
+      window.close();
+    });
+    return;
+  }
+
+  // On exam page: hide redirect, show settings
+  if (redirectContainer) redirectContainer.style.display = "none";
+
   const settings = await loadSettings();
 
   // Set the selected radio button

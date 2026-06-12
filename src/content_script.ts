@@ -211,13 +211,13 @@ function getQuerySelectors(activeTabIndex: number) {
     date:
       activeTabIndex === 0
         ? "section > div:not(div:nth-child(1))"
-        : activeTabIndex === 2
+        : activeTabIndex === 1 || activeTabIndex === 2
           ? "article.pj-item-card-wide section div.pt-1"
           : "div:not(div:nth-child(1))",
     icons:
       activeTabIndex === 0
         ? "section > div:not(div:nth-child(1)) i"
-        : activeTabIndex === 2
+        : activeTabIndex === 1 || activeTabIndex === 2
           ? "article.pj-item-card-wide section div.pt-1 i"
           : "div:not(div:nth-child(1)) i",
   };
@@ -318,8 +318,9 @@ function parseExamShot(
   title: string,
 ): ExamShot {
   const enrolled =
-    icons[index]?.getAttribute("class")?.includes("pmi-line-check-circle") ??
-    false;
+    activeTabIndex === 1 ||
+    (icons[index]?.getAttribute("class")?.includes("pmi-line-check-circle") ??
+      false);
 
   let awaitingResults = awaitingResultsInTab;
   const dateElement = dateElements[index] as HTMLElement;
