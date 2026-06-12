@@ -40,6 +40,7 @@ interface CalendarEvent extends EventInput {
     rejectable?: boolean;
     awaitingResults?: boolean;
     isDeadline?: boolean;
+    room?: string;
   };
 }
 
@@ -491,9 +492,6 @@ function createMainEvent(
   const color = getEventColor(shot);
 
   let displayTitle = exam.title;
-  if (shot.room) {
-    displayTitle += ` (${shot.room})`;
-  }
   if (shot.result !== undefined) {
     displayTitle += ` - ${shot.result}`;
     if (shot.rejectable) {
@@ -512,6 +510,7 @@ function createMainEvent(
       result: shot.result,
       rejectable: shot.rejectable,
       awaitingResults: shot.awaitingResults,
+      room: shot.room || "",
     },
   };
 
@@ -615,6 +614,68 @@ function createCalendarConfig(
     locale: customItLocale || currentLang,
     events,
     eventClick: (info: any) => handleEventClick(info, settings),
+    eventDidMount: (info: any) => {
+      const color = info.event.backgroundColor || info.event.borderColor;
+      if (color) {
+        info.el.style.setProperty("--fc-event-border-color", color);
+        info.el.style.setProperty("--fc-event-bg-color", color);
+      }
+    },
+    eventContent: (arg: any) => {
+      const timeText = arg.timeText;
+      const title = arg.event.title;
+      const rawRoom = arg.event.extendedProps?.room || "";
+
+      // Helper to format/sanitize the room badge text
+      const getRoomDisplay = (text: string): string => {
+        const val = text.trim();
+        const normalized = val.toLowerCase();
+        if (
+          !normalized ||
+          normalized.includes("non ancora disponibili") ||
+          normalized.includes("not yet available") ||
+          normalized.includes("non disponibile") ||
+          normalized.includes("n.d.") ||
+          normalized === "nd"
+        ) {
+          return "";
+        }
+        if (val.length > 10) {
+          return "Info";
+        }
+        return val;
+      };
+
+      const room = getRoomDisplay(rawRoom);
+
+      const container = document.createElement("div");
+      // Use flex layout so elements align horizontally, and wrap if there's absolutely no room
+      container.style.cssText = "display: flex; align-items: center; gap: 6px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+
+      if (timeText) {
+        const timeEl = document.createElement("span");
+        timeEl.classList.add("fc-event-time");
+        timeEl.textContent = timeText;
+        timeEl.style.cssText = "flex-shrink: 0; font-weight: bold;";
+        container.appendChild(timeEl);
+      }
+
+      const titleEl = document.createElement("span");
+      titleEl.classList.add("fc-event-title");
+      titleEl.textContent = title;
+      titleEl.style.cssText = "overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; min-width: 0;";
+      container.appendChild(titleEl);
+
+      if (room) {
+        const roomEl = document.createElement("span");
+        roomEl.classList.add("fc-event-room");
+        roomEl.textContent = room;
+        roomEl.style.cssText = "flex-shrink: 0;";
+        container.appendChild(roomEl);
+      }
+
+      return { domNodes: [container] };
+    },
     views: {
       dayGridMonth: {
         titleFormat: (date: any) => formatMonthTitle(date, currentLang),
@@ -912,6 +973,7 @@ async function attemptRenderCalendar(): Promise<void> {
 
   const activeSection = getActiveSection();
 
+  // Add export button if there are enrolled exams
   if (exams.length === 0 || !activeSection) {
     console.log("Active section not found. Retrying in 1 second...");
     setTimeout(attemptRenderCalendar, 1000);
