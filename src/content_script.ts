@@ -712,20 +712,9 @@ function addLegend(activeSection: Element, events: CalendarEvent[]): void {
   if (!legendElement) {
     legendElement = document.createElement("div");
     legendElement.id = "calendar-legend";
-    legendElement.style.cssText = `
-      margin: 10px;
-      padding: 10px;
-      border: 1px solid var(--bg-secondary-dark, #ccc);
-      border-radius: var(--border-radius, 4px);
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-      max-width: calc(100% - 20px);
-      box-sizing: border-box;
-    `;
-    activeSection.appendChild(legendElement);
   }
+
+  activeSection.appendChild(legendElement);
 
   const sortedEvents = [...events].sort((a, b) => {
     const aTime = new Date(a.start as string).getTime();
@@ -855,35 +844,50 @@ function addExportButton(): void {
   const activeSection = getActiveSection();
   if (!activeSection) return;
 
+  // Let's create or find the button container
+  let container = activeSection.querySelector<HTMLElement>("#calendar-buttons-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "calendar-buttons-container";
+    container.style.cssText = `
+      display: flex;
+      gap: 15px;
+      margin: 20px 10px;
+      flex-wrap: wrap;
+    `;
+    activeSection.appendChild(container);
+  }
+
   // ICS export button
   let exportButton =
-    activeSection.querySelector<HTMLButtonElement>("#export-ics-button");
+    container.querySelector<HTMLButtonElement>("#export-ics-button");
 
   if (!exportButton) {
     exportButton = document.createElement("button");
     exportButton.id = "export-ics-button";
     exportButton.classList.add("p-button", "p-component");
-    exportButton.style.margin = "10px";
     exportButton.addEventListener("click", generateICS);
-    activeSection.appendChild(exportButton);
+    container.appendChild(exportButton);
   }
 
   exportButton.textContent = t("exportButton");
 
   // Anxious Display export button
   let anxiousButton =
-    activeSection.querySelector<HTMLButtonElement>("#export-anxious-button");
+    container.querySelector<HTMLButtonElement>("#export-anxious-button");
 
   if (!anxiousButton) {
     anxiousButton = document.createElement("button");
     anxiousButton.id = "export-anxious-button";
     anxiousButton.classList.add("p-button", "p-component");
-    anxiousButton.style.margin = "10px";
     anxiousButton.addEventListener("click", exportToAnxiousDisplay);
-    activeSection.appendChild(anxiousButton);
+    container.appendChild(anxiousButton);
   }
 
   anxiousButton.textContent = t("exportAnxiousDisplay");
+
+  // Force the container to be at the very bottom of activeSection
+  activeSection.appendChild(container);
 }
 
 async function loadSettings(): Promise<Settings> {
@@ -908,11 +912,6 @@ async function attemptRenderCalendar(): Promise<void> {
 
   const activeSection = getActiveSection();
 
-  // Add export button if there are enrolled exams
-  if (exams.some((exam) => exam.shots.some((shot) => shot.enrolled))) {
-    addExportButton();
-  }
-
   if (exams.length === 0 || !activeSection) {
     console.log("Active section not found. Retrying in 1 second...");
     setTimeout(attemptRenderCalendar, 1000);
@@ -933,6 +932,18 @@ async function attemptRenderCalendar(): Promise<void> {
   calendar.render();
 
   addLegend(activeSection, events);
+
+  // Add or remove export buttons at the very bottom
+  const hasEnrolledExams = exams.some((exam) => exam.shots.some((shot) => shot.enrolled));
+  if (hasEnrolledExams) {
+    addExportButton();
+  } else {
+    const container = activeSection.querySelector("#calendar-buttons-container");
+    if (container) {
+      container.remove();
+    }
+  }
+
   setupClickListener();
 }
 
