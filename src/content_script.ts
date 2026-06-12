@@ -17,6 +17,8 @@ interface Exam {
 
 interface ExamShot {
   date: Date;
+  hasTime: boolean;
+  room?: string;
   enrolled: boolean;
   awaitingResults: boolean;
   result?: number;
@@ -54,6 +56,7 @@ const exams: Exam[] = [];
 const translations = {
   en: {
     exportButton: "Export exams you registered for as ICS",
+    exportAnxiousDisplay: "Export exams you registered for to Anxious Display",
     noEnrollments: "No exam enrollments found.",
     legend: "Legend:",
     rejectionDeadline: "Rejection deadline",
@@ -65,6 +68,7 @@ const translations = {
   },
   it: {
     exportButton: "Esporta gli esami a cui sei iscritto come ICS",
+    exportAnxiousDisplay: "Esporta gli esami a cui sei iscritto in Anxious Display",
     noEnrollments: "Nessuna iscrizione all'esame trovata.",
     legend: "Legenda:",
     rejectionDeadline: "Scadenza rifiuto",
@@ -145,6 +149,40 @@ function parseDate(dateText: string | undefined): Date | null {
 
   const date = new Date(year, month, day);
   return isNaN(date.getTime()) ? null : date;
+}
+
+function parseDateWithTime(
+  dateText: string | undefined,
+  detailText?: string | null,
+): { date: Date; hasTime: boolean; room?: string } | null {
+  if (!dateText) return null;
+
+  const dateResult = parseDate(dateText);
+  if (!dateResult) return null;
+
+  let hasTime = false;
+  let room: string | undefined;
+
+  // Use detail text (from .pj-pr-content element) if available, otherwise fall back to date text
+  const textForTimeRoom = detailText || dateText;
+
+  // Try to extract time from "Ora: HH:MM" / "Time: HH:MM" or standalone HH:MM
+  const timeMatch = textForTimeRoom.match(/(?:Ora|Time)\s*:\s*(\d{1,2}):(\d{2})/i)
+    || textForTimeRoom.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    const hours = parseInt(timeMatch[timeMatch.length - 2]);
+    const minutes = parseInt(timeMatch[timeMatch.length - 1]);
+    dateResult.setHours(hours, minutes, 0, 0);
+    hasTime = true;
+  }
+
+  // Try to extract room from "Aula: ..." / "Room: ..." / "Classroom: ..."
+  const roomMatch = textForTimeRoom.match(/(?:Aula|Room|Classroom)\s*:\s*([\s\S]+)/i);
+  if (roomMatch) {
+    room = roomMatch[1].trim();
+  }
+
+  return { date: dateResult, hasTime, room };
 }
 
 function getActiveTabIndex(): number {
@@ -339,6 +377,7 @@ function parseExamShot(
 
   return {
     date,
+    hasTime: false,
     enrolled,
     awaitingResults,
     result,
@@ -356,30 +395,46 @@ function extractExamData(): Exam[] {
 
   articles.forEach((card, index) => {
     const title = card.querySelector(selectors.title)?.textContent?.trim();
-    const dates = Array.from(card.querySelectorAll(selectors.date))
-      .map((el) => parseDate(el.textContent?.trim()))
-      .filter((date): date is Date => date !== null);
+    const dateTimeResults = Array.from(card.querySelectorAll(selectors.date))
+      .map((el) => {
+        // Look for the detail element (.pj-pr-content) containing time/room info
+        // It may be a sibling or child within the closest .pt-1 container
+        const container = el.closest('.pt-1') || el.parentElement;
+        const detailEl = container?.querySelector('.pj-pr-content')
+          || el.querySelector('.pj-pr-content');
+        return parseDateWithTime(
+          el.textContent?.trim(),
+          detailEl?.textContent?.trim(),
+        );
+      })
+      .filter(
+        (result): result is { date: Date; hasTime: boolean; room?: string } =>
+          result !== null,
+      );
 
     const icons = Array.from(card.querySelectorAll(selectors.icons));
     const dateElements = Array.from(card.querySelectorAll(selectors.date));
     const mainLink = card.querySelector<HTMLAnchorElement>("a[href]");
 
-    if (title && dates.length > 0) {
+    if (title && dateTimeResults.length > 0) {
       exams.push({
         title,
         articleUrl: mainLink?.href,
         articleIndex: index,
-        shots: dates.map((date, i) =>
-          parseExamShot(
-            date,
+        shots: dateTimeResults.map((dt, i) => {
+          const shot = parseExamShot(
+            dt.date,
             i,
             dateElements,
             icons,
             activeTabIndex,
             awaitingResultsInTab,
             title,
-          ),
-        ),
+          );
+          shot.hasTime = dt.hasTime;
+          shot.room = dt.room;
+          return shot;
+        }),
       });
     }
   });
@@ -435,6 +490,9 @@ function createMainEvent(
   const color = getEventColor(shot);
 
   let displayTitle = exam.title;
+  if (shot.room) {
+    displayTitle += ` (${shot.room})`;
+  }
   if (shot.result !== undefined) {
     displayTitle += ` - ${shot.result}`;
     if (shot.rejectable) {
@@ -442,11 +500,11 @@ function createMainEvent(
     }
   }
 
-  return {
+  const event: CalendarEvent = {
     title: displayTitle,
     start: shot.date.toISOString(),
     color,
-    allDay: true,
+    allDay: !shot.hasTime,
     url: eventUrl,
     extendedProps: {
       articleIndex: exam.articleIndex,
@@ -455,6 +513,14 @@ function createMainEvent(
       awaitingResults: shot.awaitingResults,
     },
   };
+
+  // For timed events, add a 1-hour duration
+  if (shot.hasTime) {
+    const endTime = new Date(shot.date.getTime() + 3600000);
+    event.end = endTime.toISOString();
+  }
+
+  return event;
 }
 
 function createDeadlineEvent(
@@ -758,10 +824,37 @@ function generateICS(): void {
   URL.revokeObjectURL(url);
 }
 
+function exportToAnxiousDisplay(): void {
+  const enrolledExams = exams.filter((exam) =>
+    exam.shots.some((shot) => shot.enrolled),
+  );
+
+  if (enrolledExams.length === 0) {
+    alert(t("noEnrollments"));
+    return;
+  }
+
+  const countdowns = enrolledExams.flatMap((exam) =>
+    exam.shots
+      .filter((shot) => shot.enrolled)
+      .map((shot) => ({
+        title: exam.title,
+        description: "imported from polimi-exam-calendar",
+        date: shot.date.toISOString(),
+      })),
+  );
+
+  const url =
+    "https://the-anxious-display.vercel.app/?countdowns=" +
+    btoa(JSON.stringify(countdowns));
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 function addExportButton(): void {
   const activeSection = getActiveSection();
   if (!activeSection) return;
 
+  // ICS export button
   let exportButton =
     activeSection.querySelector<HTMLButtonElement>("#export-ics-button");
 
@@ -775,6 +868,21 @@ function addExportButton(): void {
   }
 
   exportButton.textContent = t("exportButton");
+
+  // Anxious Display export button
+  let anxiousButton =
+    activeSection.querySelector<HTMLButtonElement>("#export-anxious-button");
+
+  if (!anxiousButton) {
+    anxiousButton = document.createElement("button");
+    anxiousButton.id = "export-anxious-button";
+    anxiousButton.classList.add("p-button", "p-component");
+    anxiousButton.style.margin = "10px";
+    anxiousButton.addEventListener("click", exportToAnxiousDisplay);
+    activeSection.appendChild(anxiousButton);
+  }
+
+  anxiousButton.textContent = t("exportAnxiousDisplay");
 }
 
 async function loadSettings(): Promise<Settings> {
