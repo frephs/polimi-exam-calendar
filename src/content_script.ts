@@ -1,5 +1,6 @@
 import { Calendar, EventInput } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import itLocale from "@fullcalendar/core/locales/it";
 import "./styles.css";
@@ -514,9 +515,9 @@ function createMainEvent(
     },
   };
 
-  // For timed events, add a 1-hour duration
+  // For timed events, add a 2-hour duration
   if (shot.hasTime) {
-    const endTime = new Date(shot.date.getTime() + 3600000);
+    const endTime = new Date(shot.date.getTime() + 7200000);
     event.end = endTime.toISOString();
   }
 
@@ -592,12 +593,16 @@ function createCalendarConfig(
   settings: Settings,
   currentLang: Language,
 ): any {
+  const activeTabIndex = getActiveTabIndex();
   const customItLocale =
     currentLang === "it"
       ? {
           code: "it",
           week: { dow: 1, doy: 4 },
-          buttonText: itLocale.buttonText,
+          buttonText: {
+            ...itLocale.buttonText,
+            timeGridWeek: "Settimana",
+          },
           weekText: itLocale.weekText,
           allDayText: itLocale.allDayText,
           moreLinkText: itLocale.moreLinkText,
@@ -608,10 +613,14 @@ function createCalendarConfig(
   const initialDate = exams.length > 0 ? exams[0].shots[0].date : new Date();
 
   return {
-    plugins: [dayGridPlugin, listPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
     initialView: "dayGridMonth",
     initialDate: initialDate,
     locale: customItLocale || currentLang,
+    height: 580,
+    buttonText: {
+      timeGridWeek: currentLang === "it" ? "Settimana" : "Week",
+    },
     events,
     eventClick: (info: any) => handleEventClick(info, settings),
     eventDidMount: (info: any) => {
@@ -649,28 +658,24 @@ function createCalendarConfig(
       const room = getRoomDisplay(rawRoom);
 
       const container = document.createElement("div");
-      // Use flex layout so elements align horizontally, and wrap if there's absolutely no room
-      container.style.cssText = "display: flex; align-items: center; gap: 6px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+      container.classList.add("fc-event-custom-container");
 
       if (timeText) {
         const timeEl = document.createElement("span");
         timeEl.classList.add("fc-event-time");
         timeEl.textContent = timeText;
-        timeEl.style.cssText = "flex-shrink: 0; font-weight: bold;";
         container.appendChild(timeEl);
       }
 
       const titleEl = document.createElement("span");
       titleEl.classList.add("fc-event-title");
       titleEl.textContent = title;
-      titleEl.style.cssText = "overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; min-width: 0;";
       container.appendChild(titleEl);
 
       if (room) {
         const roomEl = document.createElement("span");
         roomEl.classList.add("fc-event-room");
         roomEl.textContent = room;
-        roomEl.style.cssText = "flex-shrink: 0;";
         container.appendChild(roomEl);
       }
 
@@ -680,6 +685,18 @@ function createCalendarConfig(
       dayGridMonth: {
         titleFormat: (date: any) => formatMonthTitle(date, currentLang),
         dayHeaderFormat: { weekday: "long" },
+      },
+      timeGridWeek: {
+        type: "timeGrid",
+        duration: { days: 7 },
+        dateAlignment: "day",
+        dateIncrement: { days: 1 },
+        dayHeaderFormat: { weekday: "short", day: "numeric" },
+        slotMinTime: "08:00:00",
+        slotMaxTime: "21:00:00",
+        allDaySlot: true,
+        slotDuration: "01:00:00",
+        expandRows: true,
       },
       listMonth: {
         listDayFormat: {
@@ -695,7 +712,7 @@ function createCalendarConfig(
     headerToolbar: {
       right: "prev,next today",
       center: "title",
-      left: "dayGridMonth,listMonth",
+      left: (activeTabIndex === 1 || activeTabIndex === 2) ? "dayGridMonth,timeGridWeek,listMonth" : "dayGridMonth,listMonth",
     },
   };
 }
@@ -958,7 +975,12 @@ async function loadSettings(): Promise<Settings> {
       (result.linkType as "anxious-display" | "exam-article") || "exam-article";
     return { linkType };
   } catch (error) {
-    console.error("Error loading settings, using default:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("context invalidated") || msg.includes("Context invalidated")) {
+      console.warn("Extension context invalidated (extension reloaded). Using default settings.");
+    } else {
+      console.error("Error loading settings, using default:", error);
+    }
     return { linkType: "exam-article" };
   }
 }

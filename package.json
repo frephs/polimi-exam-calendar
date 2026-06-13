@@ -21,6 +21,7 @@
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/timegrid": "^6.1.20",
     "@types/fullcalendar": "^3.8.0",
     "fullcalendar": "^6.0.0"
   },
