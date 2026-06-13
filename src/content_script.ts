@@ -29,7 +29,7 @@ interface ExamShot {
 }
 
 interface Settings {
-  linkType: "anxious-display" | "exam-article";
+  linkType: "anxious-display" | "exam-article" | "download-ics";
 }
 
 type Language = "en" | "it";
@@ -67,6 +67,8 @@ const translations = {
     enrolled: "Enrolled",
     notEnrolled: "Not enrolled",
     noExamsToDisplay: "No exams to display",
+    confirmDownloadTitle: "Download Exam Calendar Event",
+    confirmDownloadMessage: "Do you want to download the ICS file for this exam?",
   },
   it: {
     exportButton: "Esporta gli esami a cui sei iscritto come ICS",
@@ -79,6 +81,8 @@ const translations = {
     enrolled: "Iscritto",
     notEnrolled: "Non iscritto",
     noExamsToDisplay: "Nessun esame da visualizzare",
+    confirmDownloadTitle: "Scarica Evento Esame",
+    confirmDownloadMessage: "Vuoi scaricare il file ICS per questo esame?",
   },
 } as const;
 
@@ -724,12 +728,155 @@ function formatMonthTitle(date: any, lang: Language): string {
   return `${capitalizedMonth} ${year}`;
 }
 
+function formatIcsDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = date.getUTCFullYear();
+  const m = pad(date.getUTCMonth() + 1);
+  const d = pad(date.getUTCDate());
+  const hh = pad(date.getUTCHours());
+  const mm = pad(date.getUTCMinutes());
+  const ss = pad(date.getUTCSeconds());
+  return `${y}${m}${d}T${hh}${mm}${ss}Z`;
+}
+
+function formatIcsAllDayDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  return `${y}${m}${d}`;
+}
+
+function downloadSingleIcs(event: any): void {
+  const title = event.title;
+  const start = event.start;
+  let end = event.end;
+  const allDay = event.allDay;
+  const room = event.extendedProps?.room || "";
+
+  if (!end) {
+    if (allDay) {
+      end = new Date(start.getTime() + 86400000);
+    } else {
+      end = new Date(start.getTime() + 7200000); // 2 hours
+    }
+  }
+
+  const dtstamp = formatIcsDate(new Date());
+  let dtstartStr = "";
+  let dtendStr = "";
+
+  if (allDay) {
+    dtstartStr = `DTSTART;VALUE=DATE:${formatIcsAllDayDate(start)}`;
+    dtendStr = `DTEND;VALUE=DATE:${formatIcsAllDayDate(end)}`;
+  } else {
+    dtstartStr = `DTSTART:${formatIcsDate(start)}`;
+    dtendStr = `DTEND:${formatIcsDate(end)}`;
+  }
+
+  const uid = `polimi-exam-${start.getTime()}-${encodeURIComponent(title)}@polimi.it`;
+  const locationLine = room ? `LOCATION:${room}\r\n` : "";
+
+  const icsLines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Polimi Exam Calendar//NONSGML v1.0//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
+    dtstartStr,
+    dtendStr,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:Polimi Exam calendar entry for ${title}${room ? ' at ' + room : ''}`,
+    locationLine.replace(/\r\n$/, ""),
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].filter(line => line !== "");
+
+  const icsContent = icsLines.join("\r\n");
+
+  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  const safeTitle = title.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
+  link.href = url;
+  link.download = `${safeTitle}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+function showAteneoConfirmDialog(title: string, message: string, onConfirm: () => void): void {
+  const backdrop = document.createElement("div");
+  backdrop.className = "ateneo-modal-backdrop";
+
+  const container = document.createElement("div");
+  container.className = "ateneo-modal-container";
+
+  const headerEl = document.createElement("div");
+  headerEl.className = "ateneo-modal-header";
+  headerEl.textContent = title;
+  container.appendChild(headerEl);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "ateneo-modal-body";
+  bodyEl.textContent = message;
+  container.appendChild(bodyEl);
+
+  const footerEl = document.createElement("div");
+  footerEl.className = "ateneo-modal-footer";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "ateneo-btn ateneo-btn-secondary";
+  cancelBtn.textContent = detectLanguage() === "it" ? "Annulla" : "Cancel";
+  cancelBtn.addEventListener("click", () => {
+    backdrop.classList.remove("show");
+    setTimeout(() => backdrop.remove(), 250);
+  });
+  footerEl.appendChild(cancelBtn);
+
+  const confirmBtn = document.createElement("button");
+  confirmBtn.className = "ateneo-btn ateneo-btn-primary";
+  confirmBtn.textContent = detectLanguage() === "it" ? "Scarica" : "Download";
+  confirmBtn.addEventListener("click", () => {
+    onConfirm();
+    backdrop.classList.remove("show");
+    setTimeout(() => backdrop.remove(), 250);
+  });
+  footerEl.appendChild(confirmBtn);
+
+  container.appendChild(footerEl);
+  backdrop.appendChild(container);
+  document.body.appendChild(backdrop);
+
+  // Force reflow
+  void backdrop.offsetHeight;
+  backdrop.classList.add("show");
+}
+
 function handleEventClick(info: any, settings: Settings): void {
   if (settings.linkType === "anxious-display") {
     info.jsEvent.preventDefault();
     if (info.event.url) {
       window.open(info.event.url, "_blank", "noopener,noreferrer");
     }
+    return;
+  }
+
+  if (settings.linkType === "download-ics") {
+    info.jsEvent.preventDefault();
+    const eventTitle = info.event.title;
+    const confirmTitle = t("confirmDownloadTitle");
+    const confirmMsg = `${t("confirmDownloadMessage")}\n\n${eventTitle}`;
+    showAteneoConfirmDialog(confirmTitle, confirmMsg, () => {
+      downloadSingleIcs(info.event);
+    });
     return;
   }
 
@@ -972,7 +1119,7 @@ async function loadSettings(): Promise<Settings> {
   try {
     const result = await browserAPI.storage.sync.get("linkType");
     const linkType =
-      (result.linkType as "anxious-display" | "exam-article") || "exam-article";
+      (result.linkType as "anxious-display" | "exam-article" | "download-ics") || "exam-article";
     return { linkType };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

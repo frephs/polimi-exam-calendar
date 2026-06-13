@@ -6,7 +6,7 @@ const browserAPI = (
 ) as typeof browser;
 
 interface Settings {
-  linkType: "anxious-display" | "exam-article";
+  linkType: "anxious-display" | "exam-article" | "download-ics";
 }
 
 // Load saved settings
@@ -17,7 +17,7 @@ async function loadSettings(): Promise<Settings> {
   // This allows the calendar to work while keeping the notification dot
   return {
     linkType:
-      (result.linkType as "anxious-display" | "exam-article") || "exam-article",
+      (result.linkType as "anxious-display" | "exam-article" | "download-ics") || "exam-article",
   };
 }
 
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     radio.addEventListener("change", async (event) => {
       const target = event.target as HTMLInputElement;
       const newSettings: Settings = {
-        linkType: target.value as "anxious-display" | "exam-article",
+        linkType: target.value as "anxious-display" | "exam-article" | "download-ics",
       };
 
       await saveSettings(newSettings);
