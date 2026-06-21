@@ -97,3 +97,6 @@ web-ext-artifacts/
 
 # VS Code settings
 .vscode/
+
+# Ignore PDFs
+*.pdf
