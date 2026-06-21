@@ -66,7 +66,7 @@ const ChromeIcon = ({ size = 14 }: { size?: number }) => (
 
 const LogoIcon = ({ size = 24 }: { size?: number }) => (
   <img
-    src="/icon.svg"
+    src={`${import.meta.env.BASE_URL}icon.svg`}
     alt="Polimi Exam Calendar"
     width={size}
     height={size}
@@ -1131,7 +1131,7 @@ export default function App() {
         <div className="support-container">
           {/* About the Developer */}
           <div className="developer-card">
-            <img src="/francesco.jpg" alt="Francesco Genovese" className="developer-avatar" />
+            <img src={`${import.meta.env.BASE_URL}francesco.jpg`} alt="Francesco Genovese" className="developer-avatar" />
             <div className="developer-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                 <h3 style={{ margin: 0 }}>Francesco Genovese</h3>
