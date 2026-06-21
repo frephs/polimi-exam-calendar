@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Hero Mockup Tabs Switcher
     const tabBtns = document.querySelectorAll('.mockup-tab-btn');
-    const mockupImages = document.querySelectorAll('.mockup-image');
+    const mockViews = document.querySelectorAll('.mock-view');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -66,13 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add active to current button
             btn.classList.add('active');
 
-            // Switch active image
+            // Switch active view
             const targetId = btn.getAttribute('data-target');
-            mockupImages.forEach((img, index) => {
+            mockViews.forEach((view, index) => {
                 if (index + 1 === parseInt(targetId)) {
-                    img.classList.add('active');
+                    view.classList.add('active');
                 } else {
-                    img.classList.remove('active');
+                    view.classList.remove('active');
                 }
             });
         });
@@ -81,15 +81,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mockup Refresh Action Animation
     const refreshBtn = document.getElementById('mockup-refresh');
     refreshBtn.addEventListener('click', () => {
-        const activeImg = document.querySelector('.mockup-image.active');
-        if (activeImg) {
-            activeImg.style.opacity = '0';
+        const activeView = document.querySelector('.mock-view.active');
+        if (activeView) {
+            activeView.style.opacity = '0';
             refreshBtn.classList.add('rotating');
             setTimeout(() => {
-                activeImg.style.opacity = '1';
+                activeView.style.opacity = '1';
                 refreshBtn.classList.remove('rotating');
             }, 350);
         }
+    });
+
+    // Mockup Theme Toggle (White / Dark)
+    const mockThemeToggleBtn = document.getElementById('mock-theme-toggle');
+    const mockupBody = document.getElementById('mockup-body');
+    const sunIcon = document.getElementById('mock-theme-icon-light');
+    const moonIcon = document.getElementById('mock-theme-icon-dark');
+
+    if (mockThemeToggleBtn && mockupBody) {
+        mockThemeToggleBtn.addEventListener('click', () => {
+            if (mockupBody.classList.contains('mock-theme-white')) {
+                mockupBody.classList.remove('mock-theme-white');
+                mockupBody.classList.add('mock-theme-dark');
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                mockupBody.classList.remove('mock-theme-dark');
+                mockupBody.classList.add('mock-theme-white');
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        });
+    }
+
+    // Interactive Course Legend Filtering
+    const checkDb2 = document.getElementById('mock-check-db2');
+    const checkFlc = document.getElementById('mock-check-flc');
+    const checkCi = document.getElementById('mock-check-ci');
+
+    const updateEventVisibility = (courseId, checked) => {
+        const events = document.querySelectorAll(`.mock-fc-event[data-course="${courseId}"]`);
+        events.forEach(event => {
+            if (checked) {
+                event.style.opacity = '1';
+                event.style.pointerEvents = 'auto';
+            } else {
+                event.style.opacity = '0';
+                event.style.pointerEvents = 'none';
+            }
+        });
+    };
+
+    if (checkDb2) {
+        checkDb2.addEventListener('change', (e) => {
+            updateEventVisibility('db2', e.target.checked);
+        });
+    }
+    if (checkFlc) {
+        checkFlc.addEventListener('change', (e) => {
+            updateEventVisibility('flc', e.target.checked);
+        });
+    }
+    if (checkCi) {
+        checkCi.addEventListener('change', (e) => {
+            updateEventVisibility('ci', e.target.checked);
+        });
+    }
+
+    // Interactive Settings Radio Options Saved Notification
+    const mockRadioButtons = document.querySelectorAll('input[name="mock-link-type"]');
+    const mockSaveStatus = document.getElementById('mock-save-status');
+
+    mockRadioButtons.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (mockSaveStatus) {
+                mockSaveStatus.classList.add('success');
+                setTimeout(() => {
+                    mockSaveStatus.classList.remove('success');
+                }, 2000);
+            }
+        });
     });
 
     // Add rotating transition style dynamically

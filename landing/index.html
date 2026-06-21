@@ -29,6 +29,7 @@
                 <li><a href="#features" class="nav-link" id="link-features">Features</a></li>
                 <li><a href="#preview" class="nav-link" id="link-preview">Comparison</a></li>
                 <li><a href="#install" class="nav-link" id="link-install">Install Guide</a></li>
+                <li><a href="#donate" class="nav-link" id="link-donate">Donate</a></li>
                 <li><a href="#faq" class="nav-link" id="link-faq">FAQ</a></li>
             </ul>
 
@@ -75,16 +76,206 @@
                         <span class="mockup-dot green"></span>
                     </div>
                     <div class="mockup-search-bar">
-                        <i data-lucide="lock" style="width:10px;height:10px;"></i> polimi.it/servizionline/esami
+                        <i data-lucide="lock" style="width:10.5px;height:10.5px;"></i> onlineservices.polimi.it/iae/app/
                     </div>
                     <div class="mockup-actions">
+                        <button class="mockup-action-btn" id="mock-theme-toggle" title="Toggle Light/Dark Mockup Mode">
+                            <i data-lucide="sun" id="mock-theme-icon-light" style="width:12px;height:12px;display:none;"></i>
+                            <i data-lucide="moon" id="mock-theme-icon-dark" style="width:12px;height:12px;"></i>
+                        </button>
                         <button class="mockup-action-btn" aria-label="Refresh" id="mockup-refresh"><i data-lucide="rotate-cw" style="width:12px;height:12px;"></i></button>
                     </div>
                 </div>
-                <div class="mockup-body" id="mockup-body">
-                    <img src="assets/demo.gif" alt="Calendar Grid Demo" class="mockup-image active" id="mockup-img-1" loading="eager">
-                    <img src="assets/demo-legend.gif" alt="Filtering Legend Demo" class="mockup-image" id="mockup-img-2" loading="lazy">
-                    <img src="assets/popup-demo.png" alt="Popup Controller Demo" class="mockup-image" id="mockup-img-3" loading="lazy">
+                <div class="mockup-body mock-theme-white" id="mockup-body">
+                    <!-- Tab 1: Mock Calendar View -->
+                    <div class="mock-view active" id="mock-view-calendar">
+                        <div class="mock-calendar-container">
+                            <div class="mock-calendar-header">
+                                <div class="mock-calendar-nav">
+                                    <button class="mock-cal-btn">&lt;</button>
+                                    <button class="mock-cal-btn">&gt;</button>
+                                    <button class="mock-cal-btn today-btn">Today</button>
+                                </div>
+                                <h3 class="mock-calendar-title">June 2026</h3>
+                                <div class="mock-calendar-views">
+                                    <button class="mock-cal-btn active">Month</button>
+                                    <button class="mock-cal-btn">Week</button>
+                                    <button class="mock-cal-btn">Day</button>
+                                    <button class="mock-cal-btn">List</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Extension Toolbar Buttons -->
+                            <div id="calendar-buttons-container-mock">
+                                <button id="export-ics-button-mock" class="p-button-mock p-component-mock">
+                                    <i data-lucide="download-cloud" style="width:13px;height:13px;margin-right:4px;"></i> Export exams you registered for as ICS
+                                </button>
+                                <button id="export-anxious-button-mock" class="p-button-mock p-component-mock">
+                                    <i data-lucide="external-link" style="width:13px;height:13px;margin-right:4px;"></i> Open Anxious Display
+                                </button>
+                            </div>
+                            
+                            <!-- Calendar Grid -->
+                            <div class="mock-calendar-grid">
+                                <div class="mock-cal-day-header">MON</div>
+                                <div class="mock-cal-day-header">TUE</div>
+                                <div class="mock-cal-day-header">WED</div>
+                                <div class="mock-cal-day-header">THU</div>
+                                <div class="mock-cal-day-header">FRI</div>
+                                <div class="mock-cal-day-header">SAT</div>
+                                <div class="mock-cal-day-header">SUN</div>
+                                
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">22</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">23</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">24</div></div>
+                                <div class="mock-cal-cell mock-today">
+                                    <div class="mock-cal-day-num">25</div>
+                                    <div class="mock-fc-event event-db2" data-course="db2">
+                                        <span class="mock-fc-event-time">09:15</span>
+                                        <span class="mock-fc-event-title">Database Systems II</span>
+                                        <span class="mock-fc-event-room">Aula B.2.2</span>
+                                    </div>
+                                </div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">26</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">27</div></div>
+                                <div class="mock-cal-cell">
+                                    <div class="mock-cal-day-num">28</div>
+                                    <div class="mock-fc-event event-flc" data-course="flc">
+                                        <span class="mock-fc-event-time">14:30</span>
+                                        <span class="mock-fc-event-title">Formal Languages & Compilers</span>
+                                        <span class="mock-fc-event-room">Aula T.1.1</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">29</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">30</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">1</div></div>
+                                <div class="mock-cal-cell">
+                                    <div class="mock-cal-day-num">2</div>
+                                    <div class="mock-fc-event event-ci" data-course="ci">
+                                        <span class="mock-fc-event-time">10:00</span>
+                                        <span class="mock-fc-event-title">Computing Infrastructures</span>
+                                        <span class="mock-fc-event-room">Aula L.21.3</span>
+                                    </div>
+                                </div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">3</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">4</div></div>
+                                <div class="mock-cal-cell"><div class="mock-cal-day-num">5</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 2: Mock Course Filtering -->
+                    <div class="mock-view" id="mock-view-filtering">
+                        <div class="mock-filtering-container">
+                            <div id="calendar-legend-mock">
+                                <strong>Filter courses:</strong>
+                                <label class="legend-filter-item-mock" for="mock-check-db2">
+                                    <input type="checkbox" id="mock-check-db2" class="legend-filter-checkbox-mock" checked style="--checkbox-color:#ef4444;">
+                                    <span>Database Systems II</span>
+                                </label>
+                                <label class="legend-filter-item-mock" for="mock-check-flc">
+                                    <input type="checkbox" id="mock-check-flc" class="legend-filter-checkbox-mock" checked style="--checkbox-color:#3b82f6;">
+                                    <span>Formal Languages & Compilers</span>
+                                </label>
+                                <label class="legend-filter-item-mock" for="mock-check-ci">
+                                    <input type="checkbox" id="mock-check-ci" class="legend-filter-checkbox-mock" checked style="--checkbox-color:#8b5cf6;">
+                                    <span>Computing Infrastructures</span>
+                                </label>
+                            </div>
+                            
+                            <!-- Small calendar preview below -->
+                            <div class="mock-calendar-container mini-preview">
+                                <div class="mock-calendar-grid">
+                                    <div class="mock-cal-day-header">MON</div>
+                                    <div class="mock-cal-day-header">TUE</div>
+                                    <div class="mock-cal-day-header">WED</div>
+                                    <div class="mock-cal-day-header">THU</div>
+                                    <div class="mock-cal-day-header">FRI</div>
+                                    <div class="mock-cal-day-header">SAT</div>
+                                    <div class="mock-cal-day-header">SUN</div>
+                                    
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">22</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">23</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">24</div></div>
+                                    <div class="mock-cal-cell mock-today">
+                                        <div class="mock-cal-day-num">25</div>
+                                        <div class="mock-fc-event event-db2" data-course="db2">
+                                            <span class="mock-fc-event-time">09:15</span>
+                                            <span class="mock-fc-event-title">DB2</span>
+                                            <span class="mock-fc-event-room">Aula B.2.2</span>
+                                        </div>
+                                    </div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">26</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">27</div></div>
+                                    <div class="mock-cal-cell">
+                                        <div class="mock-cal-day-num">28</div>
+                                        <div class="mock-fc-event event-flc" data-course="flc">
+                                            <span class="mock-fc-event-time">14:30</span>
+                                            <span class="mock-fc-event-title">FLC</span>
+                                            <span class="mock-fc-event-room">Aula T.1.1</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">29</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">30</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">1</div></div>
+                                    <div class="mock-cal-cell">
+                                        <div class="mock-cal-day-num">2</div>
+                                        <div class="mock-fc-event event-ci" data-course="ci">
+                                            <span class="mock-fc-event-time">10:00</span>
+                                            <span class="mock-fc-event-title">CI</span>
+                                            <span class="mock-fc-event-room">Aula L.21.3</span>
+                                        </div>
+                                    </div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">3</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">4</div></div>
+                                    <div class="mock-cal-cell"><div class="mock-cal-day-num">5</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 3: Mock Settings Popup -->
+                    <div class="mock-view" id="mock-view-popup">
+                        <div class="mock-popup-container">
+                            <div class="mock-popup-window">
+                                <h2>Polimi Exam Calendar Settings</h2>
+                                
+                                <div class="mock-setting-group">
+                                    <label>When clicking on an exam in the calendar:</label>
+                                    
+                                    <label class="mock-radio-option" for="mock-radio-scroll">
+                                        <input type="radio" id="mock-radio-scroll" name="mock-link-type" value="scroll" checked>
+                                        <div class="mock-radio-content">
+                                            <span class="mock-radio-label">Scroll to exam</span>
+                                            <p class="mock-radio-desc">Scroll to the exam section on this page.</p>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="mock-radio-option" for="mock-radio-anxious">
+                                        <input type="radio" id="mock-radio-anxious" name="mock-link-type" value="anxious">
+                                        <div class="mock-radio-content">
+                                            <span class="mock-radio-label">Open Anxious Display</span>
+                                            <p class="mock-radio-desc">Show a countdown view of your exams</p>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="mock-radio-option" for="mock-radio-ics">
+                                        <input type="radio" id="mock-radio-ics" name="mock-link-type" value="ics">
+                                        <div class="mock-radio-content">
+                                            <span class="mock-radio-label">Download ICS File</span>
+                                            <p class="mock-radio-desc">Download a single calendar file for this exam after confirmation</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="mock-save-status" id="mock-save-status">
+                                    Settings saved!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -386,6 +577,57 @@
                         <p>When you click the "Export ICS" button in the calendar toolbar, the extension reads all the rendered exam dates and generates a standardized <code>.ics</code> calendar file. You can import this file directly into Google Calendar, Apple Calendar, Microsoft Outlook, or any other calendar application of your choice.</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Sponsor Section -->
+        <section id="donate">
+            <div class="section-tag">Support</div>
+            <h2 class="section-title">Support the Project</h2>
+            <p class="section-desc">Polimi Exam Calendar is a free utility created to make Polimi student life a bit easier. If it helped you stay organized, consider buying me a coffee or sponsoring the development!</p>
+            
+            <div class="donate-grid">
+                <!-- Buy Me A Coffee -->
+                <a href="https://www.buymeacoffee.com/" class="donate-card bmac" target="_blank" id="donate-btn-bmac">
+                    <div class="donate-logo">
+                        <svg class="donate-svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.22 10.72h-1.44V9a2.76 2.76 0 0 0-2.76-2.76H4.2A2.76 2.76 0 0 0 1.44 9v4.92a4.44 4.44 0 0 0 4.2 4.44h7a4.44 4.44 0 0 0 4.2-3.48h3.38a2.52 2.52 0 0 0 2.52-2.52v-1.68a2.52 2.52 0 0 0-2.52-2.46zm.72 4.14a.72.72 0 0 1-.72.72h-3.48v-3.36h3.48a.72.72 0 0 1 .72.72zm-5.64-1a2.64 2.64 0 0 1-2.64 2.64h-7A2.64 2.64 0 0 1 3.24 14V9a.96.96 0 0 1 .96-.96h11.82a.96.96 0 0 1 .96.96zm-1.8-3.48H4.68v1.44h8.82zm0 2.88H4.68v1.44h8.82zM4.68 21.24h11.28v-1.44H4.68z"/>
+                        </svg>
+                    </div>
+                    <div class="donate-info">
+                        <h3>Buy Me a Coffee</h3>
+                        <p>Support with a one-time coffee donation</p>
+                    </div>
+                    <i data-lucide="arrow-up-right" class="arrow-icon"></i>
+                </a>
+
+                <!-- Ko-fi -->
+                <a href="https://ko-fi.com/" class="donate-card kofi" target="_blank" id="donate-btn-kofi">
+                    <div class="donate-logo">
+                        <svg class="donate-svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.88 8.4a3.18 3.18 0 0 0-.25-1.09 3.65 3.65 0 0 0-1.89-1.93 4.26 4.26 0 0 0-1.57-.3H1.72A1.72 1.72 0 0 0 0 6.8v8.68A4.18 4.18 0 0 0 4 19.66h12.56a4.18 4.18 0 0 0 4-3.41 3.42 3.42 0 0 0 3.32-3.42v-2.22a3.4 3.4 0 0 0 0-2.21zm-3.6 5.86a2.38 2.38 0 0 1-2.28 2h-12a2.38 2.38 0 0 1-2.28-2V8.08h16.56zm2.4-1.82A1.62 1.62 0 0 1 21 14h-.72V9.28H21a1.62 1.62 0 0 1 1.68 1.68zm-9.36-2.58A2.62 2.62 0 0 0 11.4 8a2.53 2.53 0 0 0-1.92.94 2.53 2.53 0 0 0-1.92-.94 2.62 2.62 0 0 0-1.92 4.41c1.45 1.57 3.37 3.09 3.62 3.29a.32.32 0 0 0 .44 0c.25-.2 2.17-1.72 3.62-3.29a2.62 2.62 0 0 0 .02-3.59z"/>
+                        </svg>
+                    </div>
+                    <div class="donate-info">
+                        <h3>Ko-fi</h3>
+                        <p>Donate or set up a recurring membership</p>
+                    </div>
+                    <i data-lucide="arrow-up-right" class="arrow-icon"></i>
+                </a>
+
+                <!-- PayPal -->
+                <a href="https://paypal.me/" class="donate-card paypal" target="_blank" id="donate-btn-paypal">
+                    <div class="donate-logo">
+                        <svg class="donate-svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.06 7.42a4.83 4.83 0 0 0-3.66-1.62H7.26a1.08 1.08 0 0 0-1.08 1.08L3.08 20.3a.72.72 0 0 0 .72.84h4.5a.72.72 0 0 0 .72-.6l1.2-7.56a.72.72 0 0 1 .72-.6h2.22c3.12 0 5.46-1.56 6.18-4.68a4.12 4.12 0 0 0-.28-3.28zm-4 4.56c-.54 2.4-2.28 2.4-4.26 2.4H9.62a.36.36 0 0 0-.36.36l-1.02 6.42H6.08l2.64-16.5h3.66c1.62 0 3 .12 3.78.96.6.66.66 1.74.54 2.76a4.8 4.8 0 0 1-.64 3.6zm5.82-6.6a4.91 4.91 0 0 0-3.9-1.62H9.2l.12-.78a1.08 1.08 0 0 1 1.08-1.08h9.12a4.83 4.83 0 0 1 3.66 1.62c.6.66.66 1.74.54 2.76a4.8 4.8 0 0 1-.64 3.6 4.62 4.62 0 0 1-4.26 2.4H16.7a.72.72 0 0 0-.72.6l-.3 1.92-.06.42h1.68c3.12 0 5.46-1.56 6.18-4.68a4.12 4.12 0 0 0-.28-3.28z"/>
+                        </svg>
+                    </div>
+                    <div class="donate-info">
+                        <h3>PayPal</h3>
+                        <p>Quick and secure transaction direct sponsor</p>
+                    </div>
+                    <i data-lucide="arrow-up-right" class="arrow-icon"></i>
+                </a>
             </div>
         </section>
 

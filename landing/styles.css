@@ -1169,3 +1169,572 @@ section {
         justify-content: center;
     }
 }
+
+/* Mock Theme Variables */
+#mockup-body.mock-theme-white {
+    --mock-bg: #ffffff;
+    --mock-text: #102c53;
+    --mock-text-muted: #546475;
+    --mock-border: #e3e8eb;
+    --mock-bg-special: #e7eef3;
+    --mock-white: #ffffff;
+    --mock-event-bg: #e7eef3;
+    --mock-today-bg: rgba(103, 179, 255, 0.18);
+    --mock-button-bg: #102c53;
+    --mock-button-hover: #1c34cb;
+    --mock-button-text: #ffffff;
+    --mock-legend-bg: #ffffff;
+    --mock-card-border: #c3cbd4;
+    --mock-popup-bg: #ffffff;
+}
+
+#mockup-body.mock-theme-dark {
+    --mock-bg: #0f172a;
+    --mock-text: #f8fafc;
+    --mock-text-muted: #94a3b8;
+    --mock-border: #334155;
+    --mock-bg-special: #1e293b;
+    --mock-white: #1e293b;
+    --mock-event-bg: rgba(30, 41, 59, 0.8);
+    --mock-today-bg: rgba(59, 130, 246, 0.25);
+    --mock-button-bg: #3b82f6;
+    --mock-button-hover: #2563eb;
+    --mock-button-text: #ffffff;
+    --mock-legend-bg: #1e293b;
+    --mock-card-border: rgba(255, 255, 255, 0.1);
+    --mock-popup-bg: #1e293b;
+}
+
+/* Mock Showcase Layout Styles */
+.mockup-body {
+    position: relative;
+    padding: 0 !important;
+    overflow: hidden;
+    height: 380px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mock-view {
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--mock-bg);
+    color: var(--mock-text);
+    padding: 16px;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.mock-view.active {
+    display: block;
+}
+
+/* Tab 1: Calendar CSS mimicking fullcalendar and extension styles */
+.mock-calendar-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    gap: 12px;
+}
+
+.mock-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mock-calendar-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.mock-calendar-nav, .mock-calendar-views {
+    display: flex;
+    gap: 4px;
+}
+
+.mock-cal-btn {
+    background: var(--mock-bg-special);
+    border: 1px solid var(--mock-border);
+    color: var(--mock-text);
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mock-cal-btn:hover {
+    background: var(--mock-border);
+}
+
+.mock-cal-btn.active {
+    background: var(--mock-button-bg);
+    color: var(--mock-button-text);
+    border-color: var(--mock-button-bg);
+}
+
+/* Extension buttons container style */
+#calendar-buttons-container-mock {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.p-button-mock {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    background-color: var(--mock-button-bg);
+    border: 1px solid var(--mock-button-bg);
+    color: var(--mock-button-text);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.p-button-mock:hover {
+    background-color: var(--mock-button-hover);
+    border-color: var(--mock-button-hover);
+}
+
+#export-anxious-button-mock {
+    background-color: transparent;
+    border-color: var(--mock-button-bg);
+    color: var(--mock-button-bg);
+}
+
+#export-anxious-button-mock:hover {
+    background-color: var(--mock-bg-special);
+}
+
+/* Grid Layout matching FullCalendar */
+.mock-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: auto repeat(2, 1fr);
+    gap: 2px;
+    background: var(--mock-border);
+    border: 1px solid var(--mock-border);
+    border-radius: 6px;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.mock-cal-day-header {
+    background: var(--mock-bg-special);
+    color: var(--mock-text);
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.mock-cal-cell {
+    background: var(--mock-bg);
+    padding: 4px;
+    position: relative;
+    min-height: 80px;
+    box-sizing: border-box;
+}
+
+.mock-cal-cell.mock-today {
+    background: var(--mock-today-bg);
+}
+
+.mock-cal-day-num {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--mock-text-muted);
+    margin-bottom: 4px;
+}
+
+.mock-fc-event {
+    background-color: var(--mock-bg-special);
+    border-left: 3px solid var(--fc-event-color, #102c53);
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 9px;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: opacity 0.3s ease, transform 0.2s;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mock-fc-event:hover {
+    transform: scale(1.02);
+}
+
+.mock-fc-event.event-db2 {
+    --fc-event-color: #ef4444;
+}
+.mock-fc-event.event-flc {
+    --fc-event-color: #3b82f6;
+}
+.mock-fc-event.event-ci {
+    --fc-event-color: #8b5cf6;
+}
+
+.mock-fc-event-time {
+    font-weight: 700;
+    color: var(--mock-text);
+}
+
+.mock-fc-event-title {
+    font-weight: 600;
+    color: var(--mock-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mock-fc-event-room {
+    font-size: 8px;
+    font-weight: 700;
+    align-self: flex-start;
+    color: var(--mock-text);
+    background-color: var(--mock-white);
+    border: 1px solid var(--mock-border);
+    border-radius: 3px;
+    padding: 0px 3px;
+}
+
+/* Tab 2: Course Legend Filtering Mock styles */
+.mock-filtering-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 16px;
+}
+
+#calendar-legend-mock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--mock-legend-bg);
+    border: 1px solid var(--mock-border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--mock-text);
+}
+
+#calendar-legend-mock strong {
+    font-weight: 700;
+}
+
+.legend-filter-item-mock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.legend-filter-checkbox-mock {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--checkbox-color, #102c53);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    background: var(--mock-white);
+    transition: all 0.2s;
+}
+
+.legend-filter-checkbox-mock:checked {
+    background: var(--checkbox-color, #102c53);
+}
+
+.legend-filter-checkbox-mock:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 4px;
+    height: 7px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.mock-calendar-container.mini-preview {
+    flex-grow: 1;
+}
+
+.mock-calendar-container.mini-preview .mock-cal-cell {
+    min-height: 60px;
+}
+
+/* Tab 3: Settings Popup Mock styles */
+.mock-popup-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.mock-popup-window {
+    width: 320px;
+    background: var(--mock-popup-bg);
+    border: 1px solid var(--mock-card-border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.mock-popup-window h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 16px;
+    color: var(--mock-text);
+    font-weight: 700;
+}
+
+.mock-setting-group {
+    margin-bottom: 12px;
+}
+
+.mock-setting-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--mock-text);
+}
+
+.mock-radio-option {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    padding: 8px;
+    border: 1px solid var(--mock-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--mock-white);
+}
+
+.mock-radio-option:hover {
+    background-color: var(--mock-bg-special);
+    border-color: var(--mock-card-border);
+}
+
+.mock-radio-option input[type="radio"] {
+    margin: 3px 8px 0 0;
+    cursor: pointer;
+    accent-color: var(--mock-button-bg);
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.mock-radio-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mock-radio-label {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 11px !important;
+    color: var(--mock-text);
+    margin-bottom: 2px !important;
+}
+
+.mock-radio-desc {
+    font-size: 9px;
+    color: var(--mock-text-muted);
+    line-height: 1.3;
+    margin: 0;
+}
+
+.mock-save-status {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 10px;
+    display: none;
+    font-weight: 600;
+}
+
+.mock-save-status.success {
+    background-color: var(--mock-bg-special);
+    color: #10b981;
+    border: 1px solid #10b981;
+    display: block;
+}
+
+#mockup-body.mock-theme-white .mock-save-status.success {
+    color: #008055;
+    border-color: #008055;
+}
+
+/* Theme Toggle Button Style in Mock Header */
+#mock-theme-toggle {
+    margin-right: 4px;
+}
+
+#mock-theme-toggle i {
+    color: var(--text-secondary);
+}
+
+#mock-theme-toggle:hover i {
+    color: var(--text-primary);
+}
+
+/* Donate Section CSS Styles */
+#donate {
+    padding: 100px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.donate-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+}
+
+.donate-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.donate-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.donate-card.bmac::before {
+    background: radial-gradient(300px circle at 50% 50%, rgba(255, 221, 0, 0.08), transparent 50%);
+}
+
+.donate-card.kofi::before {
+    background: radial-gradient(300px circle at 50% 50%, rgba(255, 95, 95, 0.08), transparent 50%);
+}
+
+.donate-card.paypal::before {
+    background: radial-gradient(300px circle at 50% 50%, rgba(0, 121, 193, 0.08), transparent 50%);
+}
+
+.donate-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.donate-card:hover::before {
+    opacity: 1;
+}
+
+.donate-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    z-index: 2;
+    position: relative;
+}
+
+.bmac .donate-logo {
+    background: rgba(255, 221, 0, 0.1);
+    border: 1px solid rgba(255, 221, 0, 0.2);
+    color: #ffdd00;
+}
+
+.kofi .donate-logo {
+    background: rgba(255, 95, 95, 0.1);
+    border: 1px solid rgba(255, 95, 95, 0.2);
+    color: #ff5f5f;
+}
+
+.paypal .donate-logo {
+    background: rgba(0, 121, 193, 0.1);
+    border: 1px solid rgba(0, 121, 193, 0.2);
+    color: #0079c1;
+}
+
+.donate-svg {
+    width: 24px;
+    height: 24px;
+}
+
+.donate-info {
+    text-align: left;
+    flex-grow: 1;
+    z-index: 2;
+    position: relative;
+}
+
+.donate-info h3 {
+    font-size: 18px;
+    margin-bottom: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.donate-info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.arrow-icon {
+    color: var(--text-muted);
+    transition: var(--transition);
+    z-index: 2;
+    position: relative;
+    width: 18px;
+    height: 18px;
+}
+
+.donate-card:hover .arrow-icon {
+    color: var(--text-primary);
+    transform: translate(2px, -2px);
+}
+
+@media (max-width: 900px) {
+    .donate-grid {
+        grid-template-columns: 1fr;
+    }
+}
