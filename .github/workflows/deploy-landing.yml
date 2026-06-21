@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - landing-page
     paths:
       - 'landing/**'
       - '.github/workflows/deploy-landing.yml'
