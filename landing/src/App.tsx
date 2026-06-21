@@ -66,7 +66,7 @@ const ChromeIcon = ({ size = 14 }: { size?: number }) => (
 
 const LogoIcon = ({ size = 24 }: { size?: number }) => (
   <img
-    src="icon.svg"
+    src="/icon.svg"
     alt="Polimi Exam Calendar"
     width={size}
     height={size}
@@ -216,7 +216,7 @@ const MOCK_EVENTS: CalendarEvent[] = [
   },
   {
     id: '10',
-    title: 'Sec',
+    title: 'CS',
     start: getDynamicDate(6),
     allDay: true,
     color: EVENT_COLORS.ENROLLED,
@@ -976,7 +976,7 @@ export default function App() {
             </div>
             <h3>Status-Based Color Coding</h3>
             <p>
-              Instantly differentiate your exams by status (Enrolled, Not Enrolled, Result Published, Awaiting Results, and Rejection Deadline) using exact CSS variables aligned with the Ateneo design system.
+              Instantly differentiate your exams by status (Enrolled, Not Enrolled, Result Published, Awaiting Results, and Rejection Deadline).
             </p>
           </div>
 
@@ -986,7 +986,7 @@ export default function App() {
             </div>
             <h3>Classroom Location Tags</h3>
             <p>
-              No more searching through portals. Room numbers and building identifiers (e.g. B.2.2) are extracted and displayed as convenient badges directly on your calendar event cards.
+              Room numbers and building identifiers are extracted and displayed as convenient badges directly on your calendar event cards.
             </p>
           </div>
 
@@ -996,7 +996,7 @@ export default function App() {
             </div>
             <h3>Flexible Export Controls</h3>
             <p>
-              Download single exam sessions or export your entire registration list into standard <code>.ics</code> calendar files compatible with Apple Calendar, Google Calendar, and Outlook.
+              Download single exam events or export your entire registration list into standard <code>.ics</code> calendar files compatible with your calendar app of choice.
             </p>
           </div>
 
@@ -1026,7 +1026,7 @@ export default function App() {
             </div>
             <h3>At-a-Glance Planning</h3>
             <p>
-              Access essential exam information, status badges, and direct actions instantly from a centralized dashboard layout, designed to remove college anxiety.
+              Access essential exam information, status badges, and direct actions instantly from a unique calendar layout.
             </p>
           </div>
         </div>
@@ -1131,7 +1131,7 @@ export default function App() {
         <div className="support-container">
           {/* About the Developer */}
           <div className="developer-card">
-            <img src="francesco.jpg" alt="Francesco Genovese" className="developer-avatar" />
+            <img src="/francesco.jpg" alt="Francesco Genovese" className="developer-avatar" />
             <div className="developer-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                 <h3 style={{ margin: 0 }}>Francesco Genovese</h3>
@@ -1141,10 +1141,6 @@ export default function App() {
               <p>
                 Planning an exam session can be stressful, Polimi Exam Calendar helps do it best.
               </p>
-              <a href="https://github.com/frephs" target="_blank" rel="noreferrer" className="developer-github-link">
-                <GithubIcon size={14} />
-                <span>@frephs</span>
-              </a>
             </div>
           </div>
 
