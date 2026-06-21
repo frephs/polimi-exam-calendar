@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Enhance your Polimi exam scheduling. A gorgeous, modern browser extension that adds a visual calendar, filtering legend, and ICS export to the Politecnico di Milano exam registration page.">
+    <title>Polimi Exam Calendar | Beautiful Exam Scheduling & Export</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+</head>
+<body>
+
+    <!-- Ambient Glow Orbs -->
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+
+    <!-- Navigation Header -->
+    <header class="header" id="header">
+        <div class="nav-container">
+            <a href="#" class="logo-link" id="nav-logo">
+                <img src="assets/icon.svg" alt="Polimi Exam Calendar Logo" class="logo-icon">
+                <span class="logo-text">Polimi Exam Calendar</span>
+                <span class="logo-badge">v4.2.0</span>
+            </a>
+            
+            <ul class="nav-menu">
+                <li><a href="#features" class="nav-link" id="link-features">Features</a></li>
+                <li><a href="#preview" class="nav-link" id="link-preview">Comparison</a></li>
+                <li><a href="#install" class="nav-link" id="link-install">Install Guide</a></li>
+                <li><a href="#faq" class="nav-link" id="link-faq">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a href="https://github.com/frephs/polimi-exam-calendar" class="btn btn-secondary btn-icon-only" target="_blank" aria-label="GitHub Repository" id="nav-github-btn">
+                    <i data-lucide="github"></i>
+                </a>
+                <a href="#install" class="btn btn-primary" id="nav-cta-btn">Install Now</a>
+            </div>
+
+            <button class="mobile-menu-btn" aria-label="Toggle Menu" id="mobile-menu-btn">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section" id="hero">
+            <div class="hero-badge-container">
+                <span class="hero-badge"><span class="dot"></span> Online</span>
+                <span class="hero-badge"><i data-lucide="shield-check" style="width:14px;height:14px;color:#10b981;margin-right:2px;"></i> Firefox Verified</span>
+            </div>
+            
+            <h1 class="hero-title">Manage Your Polimi Exams in a Beautiful Calendar View</h1>
+            <p class="hero-subtitle">Transform the cluttered Politecnico di Milano exam registration list into a clean, modern, interactive schedule. Filter exams by category and export to Google or Apple Calendar in seconds.</p>
+
+            <div class="hero-ctas">
+                <a href="#install" class="btn btn-primary" id="hero-primary-btn">
+                    <i data-lucide="download"></i> Get the Extension
+                </a>
+                <a href="https://github.com/frephs/polimi-exam-calendar" class="btn btn-secondary" target="_blank" id="hero-secondary-btn">
+                    <i data-lucide="github"></i> View Source Code
+                </a>
+            </div>
+
+            <!-- Interactive Mockup Showcase -->
+            <div class="mockup-container" id="mockup-container">
+                <div class="mockup-header">
+                    <div class="mockup-dots">
+                        <span class="mockup-dot red"></span>
+                        <span class="mockup-dot yellow"></span>
+                        <span class="mockup-dot green"></span>
+                    </div>
+                    <div class="mockup-search-bar">
+                        <i data-lucide="lock" style="width:10px;height:10px;"></i> polimi.it/servizionline/esami
+                    </div>
+                    <div class="mockup-actions">
+                        <button class="mockup-action-btn" aria-label="Refresh" id="mockup-refresh"><i data-lucide="rotate-cw" style="width:12px;height:12px;"></i></button>
+                    </div>
+                </div>
+                <div class="mockup-body" id="mockup-body">
+                    <img src="assets/demo.gif" alt="Calendar Grid Demo" class="mockup-image active" id="mockup-img-1" loading="eager">
+                    <img src="assets/demo-legend.gif" alt="Filtering Legend Demo" class="mockup-image" id="mockup-img-2" loading="lazy">
+                    <img src="assets/popup-demo.png" alt="Popup Controller Demo" class="mockup-image" id="mockup-img-3" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Tab Controls for Mockup -->
+            <div class="mockup-tabs">
+                <button class="mockup-tab-btn active" data-target="1" id="tab-btn-1">
+                    <i data-lucide="calendar"></i> Calendar View
+                </button>
+                <button class="mockup-tab-btn" data-target="2" id="tab-btn-2">
+                    <i data-lucide="sliders-horizontal"></i> Course Filtering
+                </button>
+                <button class="mockup-tab-btn" data-target="3" id="tab-btn-3">
+                    <i data-lucide="layout"></i> Popup Panel
+                </button>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <h3 id="stat-1">100%</h3>
+                    <p>Client-side Privacy</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="stat-2">0.2s</h3>
+                    <p>Load Overhead</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="stat-3">1-Click</h3>
+                    <p>ICS Calendar Export</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features">
+            <div class="section-tag">Capabilities</div>
+            <h2 class="section-title">Designed for Polimi Students</h2>
+            <p class="section-desc">No more navigating back and forth across overlapping tables. Organize your study session schedule cleanly and securely.</p>
+
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-card" id="feature-1">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="calendar-days"></i>
+                    </div>
+                    <h3>Interactive Calendar Grids</h3>
+                    <p>View your exam dates mapped out into beautiful month, week, or day calendars. Integrates seamlessly with FullCalendar directly inside the exam registration portal.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card" id="feature-2">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="tags"></i>
+                    </div>
+                    <h3>Dynamic Color-Coded Legend</h3>
+                    <p>Each exam course is automatically assigned a color. Check and uncheck course filters in a clean, integrated legend layout to hide/show specific exams in real-time.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card" id="feature-3">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="download-cloud"></i>
+                    </div>
+                    <h3>One-Click ICS Export</h3>
+                    <p>Instantly export individual exam schedules or the entire calendar to standard <code>.ics</code> format. Fits Google Calendar, Apple Calendar, and Outlook.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card" id="feature-4">
+                    <div class="feature-icon-wrapper">
+                        <i data-lucide="hourglass"></i>
+                    </div>
+                    <h3>Integrated Countdowns</h3>
+                    <p>Use the action popup to scroll straight to the exam section or open a live, real-time countdown to your exam on The Anxious Display helper page.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison / Preview Section -->
+        <section id="preview">
+            <div class="section-tag">Aesthetic Comparison</div>
+            <h2 class="section-title">Before and After</h2>
+            <p class="section-desc">See how the Polimi Exam Calendar replaces lists of plain rows with a high-fidelity visual layout.</p>
+
+            <div class="comparison-container">
+                <div class="comparison-meta">
+                    <div class="comparison-toggle-box">
+                        <button class="comparison-toggle-btn active" data-show="after" id="btn-show-after">Interactive View</button>
+                        <button class="comparison-toggle-btn" data-show="before" id="btn-show-before">Standard Table</button>
+                    </div>
+                    <h3 style="font-size:24px;margin-bottom:12px;" id="comparison-heading">Clean visual feedback</h3>
+                    <p style="color:var(--text-secondary);font-size:15px;line-height:1.6;" id="comparison-text">
+                        A beautiful visual grid where today is highlighted, room locations are tagged, and exam status is visually colored for clear visibility.
+                    </p>
+                </div>
+
+                <div class="comparison-screen-wrapper">
+                    <!-- Before Screen: Old boring table -->
+                    <div class="comparison-screen old-polimi-screen" id="screen-before">
+                        <div class="old-polimi-header">
+                            <h4>Bacheca Appelli d'Esame</h4>
+                            <span style="font-size:9px;color:#777;">Politecnico di Milano</span>
+                        </div>
+                        <table class="old-polimi-table">
+                            <thead>
+                                <tr>
+                                    <th>Codice</th>
+                                    <th>Insegnamento</th>
+                                    <th>Data</th>
+                                    <th>Ora</th>
+                                    <th>Aula</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>090006</td>
+                                    <td>Database Systems II</td>
+                                    <td>25/06/2026</td>
+                                    <td>09:15</td>
+                                    <td>Aula B.2.2</td>
+                                </tr>
+                                <tr>
+                                    <td>081234</td>
+                                    <td>Formal Languages & Compilers</td>
+                                    <td>28/06/2026</td>
+                                    <td>14:30</td>
+                                    <td>Aula T.1.1</td>
+                                </tr>
+                                <tr>
+                                    <td>056789</td>
+                                    <td>Computing Infrastructures</td>
+                                    <td>02/07/2026</td>
+                                    <td>10:00</td>
+                                    <td>Aula L.21.3</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="font-size:8px;color:#666;margin-top:15px;line-height:1.2;">
+                            * Per potersi iscrivere ad una sessione d'esame è necessario verificare che le scadenze indicate in tabella siano rispettate.
+                        </p>
+                    </div>
+
+                    <!-- After Screen: Calendar Grid -->
+                    <div class="comparison-screen new-calendar-screen active" id="screen-after">
+                        <div class="new-calendar-header">
+                            <h4>Calendar Appelli</h4>
+                            <div class="calendar-legend-bar">
+                                <span><span class="calendar-legend-dot event-red"></span> DB2</span>
+                                <span><span class="calendar-legend-dot event-blue"></span> FLC</span>
+                                <span><span class="calendar-legend-dot event-purple"></span> CI</span>
+                            </div>
+                        </div>
+                        
+                        <div class="new-calendar-grid">
+                            <!-- Headers -->
+                            <div class="calendar-day-header">MON</div>
+                            <div class="calendar-day-header">TUE</div>
+                            <div class="calendar-day-header">WED</div>
+                            <div class="calendar-day-header">THU</div>
+                            <div class="calendar-day-header">FRI</div>
+                            <div class="calendar-day-header">SAT</div>
+                            <div class="calendar-day-header">SUN</div>
+
+                            <!-- Row 1 -->
+                            <div class="calendar-cell"><div class="calendar-cell-num">22</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">23</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">24</div></div>
+                            <div class="calendar-cell today">
+                                <div class="calendar-cell-num">25</div>
+                                <div class="calendar-event-pill event-red">09:15 DB2</div>
+                            </div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">26</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">27</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">28</div>
+                                <div class="calendar-event-pill event-blue">14:30 FLC</div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="calendar-cell"><div class="calendar-cell-num">29</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">30</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">1</div></div>
+                            <div class="calendar-cell">
+                                <div class="calendar-cell-num">2</div>
+                                <div class="calendar-event-pill event-purple">10:00 CI</div>
+                            </div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">3</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">4</div></div>
+                            <div class="calendar-cell"><div class="calendar-cell-num">5</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Install Guide Section -->
+        <section id="install">
+            <div class="section-tag">Quick Start</div>
+            <h2 class="section-title">Install the Extension</h2>
+            <p class="section-desc">Available for Firefox, Chrome, Edge, and other major Chromium-based browsers.</p>
+
+            <div class="install-tabs-header">
+                <button class="install-tab-btn active" data-browser="firefox" id="install-tab-firefox">
+                    <i data-lucide="firefox" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Firefox
+                </button>
+                <button class="install-tab-btn" data-browser="chrome" id="install-tab-chrome">
+                    <i data-lucide="chrome" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Chrome / Edge / Opera
+                </button>
+            </div>
+
+            <!-- Firefox content -->
+            <div class="install-content-item active" id="install-content-firefox">
+                <div class="firefox-install-box">
+                    <i data-lucide="smile"></i>
+                    <h3>Verified Add-on Store</h3>
+                    <p>Firefox is our primary distribution platform. Install the official version directly from the Firefox Add-ons store with single-click installation and automatic updates.</p>
+                    <a href="https://addons.mozilla.org/en-GB/firefox/addon/polimi-exam-calendar/" class="btn btn-primary btn-lg" target="_blank" style="padding:14px 28px;font-size:16px;" id="firefox-store-link">
+                        <i data-lucide="external-link"></i> Install from Firefox Add-ons
+                    </a>
+                </div>
+            </div>
+
+            <!-- Chrome content -->
+            <div class="install-content-item" id="install-content-chrome">
+                <div class="chrome-install-steps">
+                    <!-- Step 1 -->
+                    <div class="step-card">
+                        <div class="step-num">01</div>
+                        <h4><span>1.</span> Download Release</h4>
+                        <p>Download the compiled extension bundle zip file from our latest GitHub releases page, then extract it to a directory on your machine.</p>
+                        <a href="https://github.com/frephs/polimi-exam-calendar/releases/latest" class="btn btn-secondary" target="_blank" style="margin-top:20px;font-size:12px;padding:8px 14px;" id="chrome-download-zip-btn">
+                            <i data-lucide="download"></i> Go to Releases
+                        </a>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="step-card">
+                        <div class="step-num">02</div>
+                        <h4><span>2.</span> Enable Dev Mode</h4>
+                        <p>Open your Chrome browser and navigate to <code>chrome://extensions/</code>. Locate and toggle the <strong>Developer mode</strong> switch in the upper-right corner.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-card">
+                        <div class="step-num">03</div>
+                        <h4><span>3.</span> Load Unpacked</h4>
+                        <p>Click on the <strong>Load unpacked</strong> button in the top left, select the extracted <code>dist/</code> folder from step 1, and the extension will immediately activate!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq">
+            <div class="section-tag">Support</div>
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-desc">Got questions about privacy, usage, or security? We've got answers.</p>
+
+            <div class="faq-accordion">
+                <!-- FAQ 1 -->
+                <div class="faq-item" id="faq-1">
+                    <button class="faq-question" id="faq-q-1">
+                        Is this extension completely free?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes. The extension is 100% free and open-source. The code is hosted publicly on GitHub under the MIT License, which means you are free to inspect, modify, or fork the repository.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item" id="faq-2">
+                    <button class="faq-question" id="faq-q-2">
+                        Why isn't it published on the Chrome Web Store?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Publishing an extension on the Chrome Web Store requires creating a developer account and paying a registration fee. Since this project is a free utility built for Polimi students, we distribute it for free on Firefox Add-ons (which has no publication fees) and make it available for manual installation on Chrome, Edge, and other Chromium browsers.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item" id="faq-3">
+                    <button class="faq-question" id="faq-q-3">
+                        Does the extension collect my student ID or password?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>No, absolutely not. The extension runs entirely inside your local browser. It reads the exam dates from the page's HTML structure and renders the calendar view locally. No network requests are made, and no credentials, names, or exam calendars are ever tracked or sent to any external server.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item" id="faq-4">
+                    <button class="faq-question" id="faq-q-4">
+                        How does the export to Google/Apple Calendar work?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>When you click the "Export ICS" button in the calendar toolbar, the extension reads all the rendered exam dates and generates a standardized <code>.ics</code> calendar file. You can import this file directly into Google Calendar, Apple Calendar, Microsoft Outlook, or any other calendar application of your choice.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Banner -->
+        <section class="cta-banner-section">
+            <div class="cta-banner">
+                <h2 class="cta-banner-title">Never Miss a Polimi Exam Deadline Again</h2>
+                <p class="cta-banner-desc">Install the Polimi Exam Calendar browser extension and take control of your study schedules today.</p>
+                <div class="cta-banner-actions">
+                    <a href="#install" class="btn btn-primary" id="bottom-cta-primary">Install Extension</a>
+                    <a href="https://github.com/frephs/polimi-exam-calendar" class="btn btn-secondary" target="_blank" id="bottom-cta-secondary">
+                        <i data-lucide="star" style="width:14px;height:14px;fill:currentColor;color:gold;margin-right:4px;"></i> Star on GitHub
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <img src="assets/icon.svg" alt="Logo">
+                <span>Polimi Exam Calendar</span>
+            </div>
+            <p class="footer-text">
+                Made with ❤️ for Polimi students. Not affiliated with Politecnico di Milano.
+            </p>
+            <ul class="footer-links">
+                <li><a href="https://github.com/frephs/polimi-exam-calendar" class="footer-link" target="_blank" id="footer-github-link">GitHub</a></li>
+                <li><a href="https://github.com/frephs/polimi-exam-calendar/blob/main/LICENSE" class="footer-link" target="_blank" id="footer-license-link">License</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- JS Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="script.js"></script>
+</body>
+</html>
