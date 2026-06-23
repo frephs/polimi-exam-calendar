@@ -294,8 +294,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
 
-  // Version state from latest GitHub Release
-  const [latestVersion, setLatestVersion] = useState<string>('v4.2.0');
+  const [latestVersion, setLatestVersion] = useState<string>(`v${import.meta.env.VITE_APP_VERSION || '4.2.0'}`);
 
   useEffect(() => {
     fetch('https://api.github.com/repos/frephs/polimi-exam-calendar/releases/latest')
