@@ -583,9 +583,9 @@ export default function App() {
             <span style={{ fontWeight: 600 }}>{latestVersion}</span>
           </div>
         </div>
-        <h1 className="hero-title">Manage Your Polimi Exams in a Beautiful Calendar View</h1>
+        <h1 className="hero-title">Polimi Exam Calendar</h1>
         <p className="hero-subtitle">
-          Streamline your exam session at Politecnico with a clean, modern, interactive schedule. Filter exams by status and export to Google or Apple Calendar in seconds.
+          Streamline your exam session at Politecnico with a clean, modern, interactive scheduling tool. Filter exams by status and export to Google or Apple Calendar in seconds.
         </p>
         <div className="hero-ctas">
           <button onClick={handleInstallClick} className="btn btn-primary" style={{ gap: '8px' }}>
