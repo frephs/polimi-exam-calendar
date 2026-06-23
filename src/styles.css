@@ -567,3 +567,31 @@
     background-color: var(--polimi20, #c3cbd4) !important;
     transform: translateY(-1px) !important;
 }
+
+
+.pj-dark-theme {
+    --white-white-special: var(--bg-primary-white, #121212);
+    --polimi20: var(--bg-primary-dark, #2b2b2b);
+    --bg-primary-special: var(--bg-primary-medium, #343434);
+    --polimiBaseColor: var(--primary-accent-dark, #50a3f6);
+    --polimiAccent1Dark: var(--primary-accent-light, #67b3ff);
+    --polimiGreyBlue: var(--grey-grey-special, #c1c7ca);
+    --polimiNeutralGray100: var(--bg-primary-dark, #2b2b2b);
+    --text-white: #121212;
+}
+
+.pj-dark-theme .fc-daygrid-block-event .fc-event-custom-container .fc-event-title {
+    color: #ffffff !important;
+}
+
+.pj-dark-theme .ateneo-modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.pj-dark-theme .ateneo-btn-primary {
+    color: var(--text-white, #ffffff) !important;
+}
+
+.pj-dark-theme .ateneo-btn-secondary:hover {
+    background-color: var(--bg-primary-medium, #343434) !important;
+}

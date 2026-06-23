@@ -147,6 +147,32 @@
         .redirect-button:hover {
             background-color: var(--polimiAccent1Dark);
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-dark: #fafafa;
+                --polimiBaseColor: #50a3f6;
+                --polimiAccent1Dark: #67b3ff;
+                --polimiNeutralGray100: #2b2b2b;
+                --alert-success: #379476;
+                --polimiGreyBlue: #c1c7ca;
+                --polimi20: #414141;
+                --polimi40: #7a90a4;
+                --bg-primary-special: #343434;
+                --white-white-special: #121212;
+                --text-white: #121212;
+            }
+            .radio-option {
+                border-color: var(--polimi20);
+            }
+            .radio-option:hover {
+                background-color: var(--bg-primary-special);
+                border-color: var(--polimi40);
+            }
+            .save-status.success {
+                border-color: var(--alert-success);
+            }
+        }
     </style>
 </head>
 
