@@ -18,23 +18,9 @@ import {
   Heart,
   Clock,
   Layers,
-  Tag
+  Tag,
+  Star
 } from 'lucide-react';
-
-const GithubIcon = ({ size = 18 }: { size?: number }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    width={size} 
-    height={size} 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    fill="none" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-  >
-    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-  </svg>
-);
 
 const FirefoxIcon = ({ size = 14 }: { size?: number }) => (
   <svg
@@ -295,6 +281,7 @@ export default function App() {
   const [showSaveSuccess, setShowSaveSuccess] = useState<boolean>(false);
 
   const [latestVersion, setLatestVersion] = useState<string>(`v${import.meta.env.VITE_APP_VERSION || '4.2.0'}`);
+  const [starCount, setStarCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('https://api.github.com/repos/frephs/polimi-exam-calendar/releases/latest')
@@ -309,6 +296,20 @@ export default function App() {
       })
       .catch(err => {
         console.warn('Could not fetch latest release version from GitHub:', err);
+      });
+
+    fetch('https://api.github.com/repos/frephs/polimi-exam-calendar')
+      .then(res => {
+        if (!res.ok) throw new Error('API response error');
+        return res.json();
+      })
+      .then(data => {
+        if (typeof data.stargazers_count === 'number') {
+          setStarCount(data.stargazers_count);
+        }
+      })
+      .catch(err => {
+        console.warn('Could not fetch stargazers count from GitHub:', err);
       });
   }, []);
 
@@ -545,10 +546,22 @@ export default function App() {
               href="https://github.com/frephs/polimi-exam-calendar" 
               target="_blank" 
               rel="noreferrer" 
-              className="btn-icon-only"
-              aria-label="GitHub Repository"
+              className="btn btn-secondary nav-star-btn"
+              style={{ gap: '6px', display: 'inline-flex', alignItems: 'center', padding: '6px 12px', borderRadius: '8px', fontSize: '13px' }}
+              aria-label="Star on GitHub"
             >
-              <GithubIcon size={18} />
+              <Star size={14} style={{ fill: '#eab308', color: '#eab308' }} />
+              <span>Star</span>
+              {starCount !== null && (
+                <span className="star-count-badge" style={{
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  marginLeft: '4px'
+                }}>{starCount}</span>
+              )}
             </a>
             <button 
               onClick={handleInstallClick} 
@@ -591,9 +604,24 @@ export default function App() {
             <Download size={16} />
             <span>Install Extension</span>
           </button>
-          <a href="https://github.com/frephs/polimi-exam-calendar" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ gap: '8px' }}>
-            <GithubIcon size={16} />
-            <span>View Source Code</span>
+          <a 
+            href="https://github.com/frephs/polimi-exam-calendar" 
+            target="_blank" 
+            rel="noreferrer" 
+            className="btn btn-secondary hero-star-btn" 
+            style={{ gap: '8px', display: 'inline-flex', alignItems: 'center' }}
+          >
+            <Star size={16} style={{ fill: '#eab308', color: '#eab308' }} />
+            <span>Star on GitHub</span>
+            {starCount !== null && (
+              <span className="star-count-badge" style={{
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 600
+              }}>{starCount}</span>
+            )}
           </a>
         </div>
 
@@ -949,6 +977,10 @@ export default function App() {
           <div className="stat-item">
             <h3>4.8★</h3>
             <p>User Rating</p>
+          </div>
+          <div className="stat-item">
+            <h3>{starCount !== null ? `${starCount}★` : '—'}</h3>
+            <p>GitHub Stars</p>
           </div>
           <div className="stat-item">
             <h3>99.9%</h3>
