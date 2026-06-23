@@ -1000,10 +1000,6 @@ export default function App() {
         {/* Hero quick stats */}
         <div className="stats-bar">
           <div className="stat-item">
-            <h3>4.8★</h3>
-            <p>User Rating</p>
-          </div>
-          <div className="stat-item">
             <h3>{starCount !== null ? `${starCount}★` : '—'}</h3>
             <p>GitHub Stars</p>
           </div>
