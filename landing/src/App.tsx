@@ -250,6 +250,17 @@ const MOCK_EVENTS: CalendarEvent[] = [
 ];
 
 export default function App() {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Page States
   const [isLightTheme, setIsLightTheme] = useState<boolean>(() => {
     return localStorage.getItem('theme') === 'light';
@@ -649,8 +660,10 @@ export default function App() {
             <span>View Source Code</span>
           </a>
         </div>
+      </section>
 
-        {/* INTERACTIVE MOCKUP SHOWCASE */}
+      {/* INTERACTIVE MOCKUP SHOWCASE */}
+      <section className="hero-showcase-container">
         <div className="mockup-wrapper">
           <div className="mockup-container">
           <div className="mockup-header">
@@ -801,6 +814,7 @@ export default function App() {
               {/* FullCalendar instance */}
               <div style={{ flexGrow: 1, overflow: 'hidden', minHeight: '320px', height: '0px' }}>
                 <FullCalendar
+                  key={isMobile ? 'mobile' : 'desktop'}
                   plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
                   initialView="dayGridMonth"
                   initialDate="2026-06-22"
@@ -1227,6 +1241,14 @@ export default function App() {
             </div>
           </div>
         </div>
+        
+        <div style={{ marginTop: '60px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span>© {new Date().getFullYear()} Polimi Exam Calendar. MIT Licensed.</span>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+            <a href="https://github.com/frephs/polimi-exam-calendar" target="_blank" rel="noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>GitHub</a>
+            <a href="https://github.com/frephs/polimi-exam-calendar/blob/main/LICENSE" target="_blank" rel="noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>License</a>
+          </div>
+        </div>
       </section>
 
       {/* Install Redirect Modal */}
@@ -1281,18 +1303,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-container">
-          <span className="footer-text">
-            © {new Date().getFullYear()} Polimi Exam Calendar. MIT Licensed.
-          </span>
-          <div className="footer-links">
-            <a href="https://github.com/frephs/polimi-exam-calendar" target="_blank" rel="noreferrer" className="footer-link">GitHub</a>
-            <a href="https://github.com/frephs/polimi-exam-calendar/blob/main/LICENSE" target="_blank" rel="noreferrer" className="footer-link">License</a>
-          </div>
-        </div>
-      </footer>
     </>
   );
 }
